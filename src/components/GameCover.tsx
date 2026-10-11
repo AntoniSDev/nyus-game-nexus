@@ -3,7 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import { statuses, type Status } from "../types";
 import { WorldArtwork, worldCaptions } from "./WorldArtwork";
 
-/** Image-first presentation. A future catalogue only needs to supply coverUrl. */
+/** Permanent genre scenery plus an optional, uncropped game-cover vignette. */
 export function GameCover({
   name,
   coverUrl,
@@ -18,23 +18,25 @@ export function GameCover({
   onEdit: () => void;
 }) {
   const [failedUrl, setFailedUrl] = useState("");
+  const [orientation, setOrientation] = useState({ url: "", landscape: false });
   const hasCover = Boolean(coverUrl && failedUrl !== coverUrl);
   return (
     <button
-      className={`cover ${hasCover ? "has-cover" : "illustrated-cover"}`}
+      className={`cover ${hasCover ? "has-cover" : "illustrated-cover"} ${orientation.url === coverUrl && orientation.landscape ? "has-landscape-cover" : ""}`}
       aria-label={`Modifier ${name}`}
       onClick={onEdit}
     >
-      {hasCover ? (
-        <>
-          <img
-            className="cover-ambient"
-            src={coverUrl}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
+      <span className="cover-art" aria-hidden="true">
+        <WorldArtwork theme={theme} />
+        <span className="world-caption">{worldCaptions[theme]}</span>
+      </span>
+      {hasCover && (
+        <span
+          className={`mini-cover ${orientation.url === coverUrl && orientation.landscape ? "mini-cover-landscape" : "mini-cover-portrait"}`}
+        >
+          <span className="mini-cover-pin" aria-hidden="true">
+            ✦
+          </span>
           <img
             className="cover-image"
             src={coverUrl}
@@ -42,12 +44,14 @@ export function GameCover({
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={() => setFailedUrl(coverUrl)}
+            onLoad={(e) =>
+              setOrientation({
+                url: coverUrl,
+                landscape:
+                  e.currentTarget.naturalWidth > e.currentTarget.naturalHeight,
+              })
+            }
           />
-        </>
-      ) : (
-        <span className="cover-art" aria-hidden="true">
-          <WorldArtwork theme={theme} />
-          <span className="world-caption">{worldCaptions[theme]}</span>
         </span>
       )}
       <span className={`status-badge status-${statuses.indexOf(status)}`}>

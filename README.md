@@ -56,6 +56,8 @@ La base Vite est `/` : les CSS et JavaScript générés sont servis sous `/asset
 
 ## Organisation
 
+Le pied de page affiche la version de `package.json` et l’identifiant court du commit déployé. Cloudflare fournit cet identifiant via `CF_PAGES_COMMIT_SHA` ; en local, Vite utilise le commit Git courant (ou « local » sans Git). Mettre à jour la version du package et du lockfile lors d’une nouvelle version fonctionnelle.
+
 `src/components/` : cartes, formulaires, dialogues ; `src/sections/` : dashboard ; `src/hooks/` : sauvegarde ; `src/types/` : schéma ; `src/data/` : roster initial ; `src/utils/` : validation et tests ; `src/styles/` : thème centralisé et responsive.
 
 Les tests couvrent le roster, la sauvegarde/relecture, les collections vides, les imports invalides, les candidats par genre, les suppressions et les erreurs de stockage.

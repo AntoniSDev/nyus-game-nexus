@@ -1088,6 +1088,14 @@ footer > span:last-child {
   color: #d0b3cc;
   font-size: 12px;
 }
+.build-version {
+  align-self: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+  color: var(--soft-mint);
+}
 .local-dot {
   background: var(--soft-mint);
   width: 5px;

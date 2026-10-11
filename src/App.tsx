@@ -15,6 +15,7 @@ import { Dashboard } from "./sections/Dashboard";
 import { upsertGame, validateCollection } from "./utils/collection";
 import type { Collection, Game } from "./types";
 import { FamiliarMark } from "./components/SanctuaryArt";
+import { BuildVersion } from "./components/BuildVersion";
 export default function App() {
   const { collection, update, error, setError } = useCollection();
   const [form, setForm] = useState<Game | "new" | null>(null);
@@ -205,6 +206,7 @@ export default function App() {
               <span className="local-dot" /> Vos données restent dans ce
               navigateur
             </span>
+            <BuildVersion />
             <span>Un peu de magie. Beaucoup de petits bonheurs. ✧</span>
           </footer>
         </main>

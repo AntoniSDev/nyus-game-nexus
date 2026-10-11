@@ -20,9 +20,13 @@ export async function catalogRequest<T>(
     );
   return data as T;
 }
-export const searchCatalog = (query: string, signal: AbortSignal) =>
+export const searchCatalog = (
+  query: string,
+  signal: AbortSignal,
+  steamAppIds: number[] = [],
+) =>
   catalogRequest<{ games: CatalogGame[] }>(
-    `search?q=${encodeURIComponent(query)}`,
+    `search?q=${encodeURIComponent(query)}${steamAppIds.length ? `&steamAppIds=${steamAppIds.slice(0, 10).join(",")}` : ""}`,
     signal,
   );
 export const catalogArtwork = (id: number, signal: AbortSignal) =>

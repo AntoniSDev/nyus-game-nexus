@@ -12,12 +12,14 @@ export function SteamGamePicker({
   onSelect,
   onLibrary,
   onConnect,
+  onEditExisting,
 }: {
   collection: Collection;
   draft: Game;
   onSelect: (game: Game) => void;
   onLibrary: (library: SteamLibrary) => boolean;
   onConnect: () => void;
+  onEditExisting: (game: Game) => void;
 }) {
   const [library, setLibrary] = useState(collection.steamLibrary);
   const [query, setQuery] = useState("");
@@ -64,7 +66,7 @@ export function SteamGamePicker({
         .slice(0, 8) ?? [])
     : [];
   const duplicate = (g: SteamLibraryGame) =>
-    collection.games.some(
+    collection.games.find(
       (existing) =>
         existing.id !== draft.id &&
         (existing.steam?.appId === g.appId ||
@@ -72,7 +74,12 @@ export function SteamGamePicker({
             g.name.trim().toLocaleLowerCase()),
     );
   async function choose(game: SteamLibraryGame) {
-    if (!library || busy || duplicate(game)) return;
+    if (!library || busy) return;
+    const existing = duplicate(game);
+    if (existing) {
+      onEditExisting(existing);
+      return;
+    }
     const abort = new AbortController();
     controller.current?.abort();
     controller.current = abort;
@@ -212,16 +219,16 @@ export function SteamGamePicker({
                   type="button"
                   role="option"
                   aria-selected={active === i}
-                  disabled={busy || duplicate(g)}
+                  disabled={busy}
                   onClick={() => void choose(g)}
                 >
                   <span>
                     <strong>{g.name}</strong>
                     <small>
-                      {steamHours(g.playtimeMinutes)} ·{" "}
+                      {steamHours(g.playtimeMinutes)}{" "}
                       {duplicate(g)
-                        ? "Déjà dans le Nexus"
-                        : "Possédé sur Steam"}
+                        ? "· Déjà dans mon Nexus · Modifier la carte"
+                        : ""}
                     </small>
                   </span>
                 </button>

@@ -41,7 +41,7 @@ export function SteamPanel({
         )}
       </div>
       <button className="primary" onClick={onOpen}>
-        {p ? "Explorer ma bibliothèque" : "Relier mon profil Steam"}{" "}
+        {p ? "Gérer ma connexion Steam" : "Relier mon profil Steam"}{" "}
         <span aria-hidden="true">↗</span>
       </button>
     </section>

@@ -25,7 +25,13 @@ export const worldCaptions = [
 ];
 
 /** Decorative genre landscapes, never presented as actual game covers. */
-export function WorldArtwork({ theme }: { theme: number }) {
+export function WorldArtwork({
+  theme,
+  fit = "slice",
+}: {
+  theme: number;
+  fit?: "meet" | "slice";
+}) {
   const id = useId();
   const [sky, hill, light] = [
     "var(--world-sky)",
@@ -38,7 +44,7 @@ export function WorldArtwork({ theme }: { theme: number }) {
       viewBox="0 0 360 240"
       fill="none"
       aria-hidden="true"
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio={`xMidYMid ${fit}`}
     >
       <defs>
         <linearGradient id={`${id}-sky`} x2="0" y2="1">

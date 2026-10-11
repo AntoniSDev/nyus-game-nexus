@@ -1,4 +1,5 @@
 export interface SteamProfile {
+  avatarUrl?: string;
   steamId64: string;
   displayName: string;
   profileUrl: string;

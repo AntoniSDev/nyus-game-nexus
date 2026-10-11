@@ -12,6 +12,7 @@ export interface CatalogArtwork {
   author: string;
 }
 export interface CatalogGame {
+  steamAppId?: number;
   id: number;
   name: string;
   releaseYear?: number;

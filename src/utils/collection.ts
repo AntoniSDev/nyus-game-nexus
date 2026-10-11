@@ -6,6 +6,7 @@ import {
   steamDate,
   steamMinutes,
   validateSteamLibrary,
+  validateSteamProfile,
 } from "./steamValidation";
 import type {
   CatalogReference,
@@ -117,23 +118,7 @@ export function validateCollection(value: unknown): Collection {
   const gameIds = new Set<string>();
   let profile: SteamProfile | undefined;
   if (value.steamProfile !== undefined) {
-    const p = value.steamProfile;
-    if (
-      !isRecord(p) ||
-      typeof p.steamId64 !== "string" ||
-      !validSteamId(p.steamId64) ||
-      !text(p.displayName, 160) ||
-      p.profileUrl !== `https://steamcommunity.com/profiles/${p.steamId64}/` ||
-      !text(p.lastSyncedAt, 100) ||
-      !Number.isFinite(Date.parse(p.lastSyncedAt))
-    )
-      throw new Error("Profil Steam de sauvegarde invalide.");
-    profile = {
-      steamId64: p.steamId64,
-      displayName: p.displayName,
-      profileUrl: p.profileUrl,
-      lastSyncedAt: p.lastSyncedAt,
-    };
+    profile = validateSteamProfile(value.steamProfile);
   }
   for (const c of value.categories) {
     if (

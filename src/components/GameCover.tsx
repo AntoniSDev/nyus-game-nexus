@@ -27,7 +27,7 @@ export function GameCover({
       onClick={onEdit}
     >
       <span className="cover-art" aria-hidden="true">
-        <WorldArtwork theme={theme} />
+        <WorldArtwork theme={theme} fit="meet" />
         <span className="world-caption">{worldCaptions[theme]}</span>
       </span>
       {hasCover && (

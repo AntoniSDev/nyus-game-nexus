@@ -6,6 +6,13 @@ import type {
   SteamLibraryGame,
 } from "../types/steam";
 import { validateCollection } from "./collection";
+/** Disconnect only the profile/cache; personal games and Steam observations stay intact. */
+export function disconnectSteam(collection: Collection): Collection {
+  const next = { ...collection };
+  delete next.steamProfile;
+  delete next.steamLibrary;
+  return validateCollection(next);
+}
 export function cacheSteamLibrary(
   collection: Collection,
   library: SteamLibrary,

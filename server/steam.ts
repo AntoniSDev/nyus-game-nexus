@@ -1,4 +1,5 @@
 import { parseSteamProfile, validSteamId } from "../src/utils/steamProfile";
+import { steamAvatarUrl } from "../src/utils/steamValidation";
 import type { SteamLibraryGame } from "../src/types/steam";
 import { allowRequest } from "./catalog";
 export interface SteamContext {
@@ -204,11 +205,16 @@ export async function handleSteam(
         : undefined;
     if (!record(player) || typeof player.personaname !== "string")
       throw new SteamError(404, "Ce profil Steam est introuvable.");
+    const avatarUrl =
+      steamAvatarUrl(player.avatarfull) ??
+      steamAvatarUrl(player.avatarmedium) ??
+      steamAvatarUrl(player.avatar);
     const profile = {
       steamId64: steamId,
       displayName: player.personaname.slice(0, 160),
       profileUrl: `https://steamcommunity.com/profiles/${steamId}/`,
       lastSyncedAt,
+      ...(avatarUrl ? { avatarUrl } : {}),
     };
     if (player.communityvisibilitystate !== 3)
       return respond({ profile, games: [], libraryVisible: false });

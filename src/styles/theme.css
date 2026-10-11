@@ -900,6 +900,8 @@ h1 span {
   display: block;
   position: absolute;
   inset: 0;
+  /* Fill the frame while the SVG keeps its complete, undistorted composition. */
+  background: linear-gradient(var(--world-sky), var(--world-hill));
 }
 .world-artwork {
   width: 100%;
@@ -2236,7 +2238,7 @@ dialog {
   font-size: 15px;
 }
 .category-games {
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 .cover {
@@ -2405,6 +2407,20 @@ dialog {
 }
 .steam-profile {
   background: linear-gradient(120deg, #c6e6ee99, #dbcceb88);
+}
+.steam-avatar {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+.steam-connection-actions,
+.steam-disconnect {
+  margin-top: 16px;
+}
+.steam-connection-actions {
+  flex-wrap: wrap;
 }
 .steam-games {
   max-height: 390px;

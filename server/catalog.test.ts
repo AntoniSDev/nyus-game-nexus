@@ -14,6 +14,62 @@ const image = {
   thumb: "https://cdn2.steamgriddb.com/thumb/test.png",
   author: { name: "Test artist", steam64: "private-upstream-field" },
 };
+test("catalog ownership hints require official app-to-catalog ID mappings, never matching titles", async () => {
+  const response = await handleCatalog(
+    context("search?q=Valheim&steamAppIds=892970,42,43"),
+    "search",
+    async (input, init) => {
+      const url = String(input);
+      assert.equal(
+        new Headers(init?.headers).get("Authorization"),
+        "Bearer test-only-private-token",
+      );
+      assert.equal(new URL(url).hostname, "www.steamgriddb.com");
+      if (url.includes("games/steam/43")) throw new Error("private-test-only");
+      return Response.json({
+        success: true,
+        data: url.includes("search/autocomplete")
+          ? [
+              { id: 100, name: "Valheim" },
+              { id: 101, name: "Valheim similarly named" },
+              { id: 102, name: "Other" },
+            ]
+          : url.includes("games/steam/892970")
+            ? { id: 100, name: "Catalog alias" }
+            : url.includes("games/steam/42")
+              ? { id: 999, name: "Valheim similarly named" }
+              : [image],
+      });
+    },
+  );
+  const body = (await response.json()) as {
+    games: { id: number; steamAppId?: number }[];
+  };
+  assert.equal(body.games.find((g) => g.id === 100)?.steamAppId, 892970);
+  assert.equal(body.games.find((g) => g.id === 101)?.steamAppId, undefined);
+  assert.equal(body.games.find((g) => g.id === 102)?.steamAppId, undefined);
+  for (const ids of [
+    "",
+    "0",
+    "1,1",
+    "4294967296",
+    "1,2,3,4,5,6,7,8,9,10,11",
+    "1/evil",
+  ]) {
+    assert.equal(
+      (
+        await handleCatalog(
+          context(`search?q=test&steamAppIds=${encodeURIComponent(ids)}`),
+          "search",
+          async () => {
+            throw new Error("must not fetch");
+          },
+        )
+      ).status,
+      400,
+    );
+  }
+});
 test("catalog search authenticates server-side and returns only normalized public fields", async () => {
   const requests: string[] = [];
   const fetcher: typeof fetch = async (input, init) => {

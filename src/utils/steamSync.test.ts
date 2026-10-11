@@ -2,7 +2,11 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { initialCollection } from "../data/initial";
 import { loadCollection, validateCollection } from "./collection";
-import { cacheSteamLibrary, mergeSteamGame } from "./steamCollection";
+import {
+  cacheSteamLibrary,
+  mergeSteamGame,
+  disconnectSteam,
+} from "./steamCollection";
 import { synchronizeSteam } from "./steamSync";
 import type { SteamLibrary } from "../types/steam";
 const library: SteamLibrary = {
@@ -23,6 +27,48 @@ const library: SteamLibrary = {
     },
   ],
 };
+test("disconnect preserves every game and observation; validated optional avatars survive import/export", () => {
+  const avatarUrl = "https://avatars.steamstatic.com/abcdef123456_full.jpg";
+  const withAvatar = { ...library, profile: { ...library.profile, avatarUrl } };
+  const saved = mergeSteamGame(
+    initialCollection(),
+    withAvatar,
+    library.games[0],
+    "category-0",
+  );
+  const before = JSON.stringify(saved);
+  const imported = validateCollection(JSON.parse(before));
+  assert.equal(imported.steamProfile?.avatarUrl, avatarUrl);
+  assert.equal(imported.steamLibrary?.profile.avatarUrl, avatarUrl);
+  const disconnected = disconnectSteam(imported);
+  assert.deepEqual(disconnected.games, saved.games);
+  assert.deepEqual(disconnected.categories, saved.categories);
+  assert.equal(disconnected.steamProfile, undefined);
+  assert.equal(disconnected.steamLibrary, undefined);
+  assert.equal(JSON.stringify(saved), before);
+  for (const url of [
+    "https://evil.test/avatar.jpg",
+    "javascript:alert(1)",
+    "https://avatars.steamstatic.com@evil.test/a.jpg",
+    "https://avatars.steamstatic.com/abc_full.jpg?key=secret",
+  ]) {
+    assert.throws(() =>
+      validateCollection({
+        ...saved,
+        steamProfile: { ...withAvatar.profile, avatarUrl: url },
+      }),
+    );
+    assert.throws(() =>
+      validateCollection({
+        ...saved,
+        steamLibrary: {
+          ...withAvatar,
+          profile: { ...withAvatar.profile, avatarUrl: url },
+        },
+      }),
+    );
+  }
+});
 test("public library cache survives export and old saves remain byte-for-byte unchanged on load", () => {
   const old = initialCollection();
   const raw = JSON.stringify(old);

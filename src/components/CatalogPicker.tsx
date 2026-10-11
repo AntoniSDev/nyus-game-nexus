@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from "react";
 import type { CatalogArtwork, CatalogGame } from "../types/catalog";
 import type { Game } from "../types";
+import type { SteamLibraryGame } from "../types/steam";
 import { catalogArtwork, searchCatalog } from "../utils/catalogClient";
 
 function CatalogImage({ url, name }: { url?: string; name: string }) {
@@ -24,10 +25,14 @@ export function CatalogPicker({
   games,
   onSelect,
   onArtwork,
+  onEditExisting,
+  ownedGames,
 }: {
   draft: Game;
   games: Game[];
   onSelect: (game: CatalogGame) => void;
+  onEditExisting: (game: Game) => void;
+  ownedGames?: SteamLibraryGame[];
   onArtwork: (
     image: CatalogArtwork,
     automatic?: boolean,
@@ -58,7 +63,18 @@ export function CatalogPicker({
     }
     setLoading(true);
     const timer = setTimeout(() => {
-      searchCatalog(query.trim(), controller.signal)
+      searchCatalog(
+        query.trim(),
+        controller.signal,
+        ownedGames
+          ?.filter((g) =>
+            g.name
+              .toLocaleLowerCase()
+              .includes(query.trim().toLocaleLowerCase()),
+          )
+          .slice(0, 10)
+          .map((g) => g.appId),
+      )
         .then((data) => {
           if (controller.signal.aborted) return;
           setResults(data.games);
@@ -83,7 +99,7 @@ export function CatalogPicker({
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, manual, retry]);
+  }, [query, manual, retry, ownedGames]);
   useEffect(() => {
     const controller = new AbortController();
     setImages([]);
@@ -116,7 +132,7 @@ export function CatalogPicker({
     // onArtwork uses a functional draft update; changing personal fields must not refetch.
   }, [selectedId, artRetry]);
   const duplicate = (item: CatalogGame) =>
-    games.some(
+    games.find(
       (g) =>
         g.id !== draft.id &&
         (g.catalog?.id === item.id ||
@@ -124,10 +140,9 @@ export function CatalogPicker({
             item.name.trim().toLocaleLowerCase()),
     );
   function choose(item: CatalogGame) {
-    if (duplicate(item)) {
-      setMessage(
-        "Ce jeu est déjà dans votre collection. Retrouvez sa carte pour le modifier.",
-      );
+    const existing = duplicate(item);
+    if (existing) {
+      onEditExisting(existing);
       return;
     }
     onSelect(item);
@@ -233,7 +248,6 @@ export function CatalogPicker({
                 type="button"
                 role="option"
                 aria-selected={active === index}
-                aria-disabled={duplicate(item)}
                 className={active === index ? "active" : ""}
                 onClick={() => choose(item)}
               >
@@ -245,8 +259,13 @@ export function CatalogPicker({
                   <strong>{item.name}</strong>
                   <small>
                     {duplicate(item)
-                      ? "Déjà dans votre sanctuaire"
+                      ? "Déjà dans mon Nexus · Modifier la carte"
                       : item.releaseYear || "SteamGridDB"}
+                    {!duplicate(item) &&
+                    item.steamAppId !== undefined &&
+                    ownedGames?.some((g) => g.appId === item.steamAppId)
+                      ? " · Possédé sur Steam"
+                      : ""}
                   </small>
                 </span>
               </button>

@@ -240,6 +240,8 @@ export default function App() {
       </div>
       {form && collection && (
         <GameForm
+          key={form === "new" ? "new" : form.id}
+          onEditExisting={setForm}
           game={form === "new" ? undefined : form}
           categories={collection.categories}
           initialCategoryId={newCategoryId}

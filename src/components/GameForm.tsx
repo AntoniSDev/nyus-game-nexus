@@ -14,6 +14,7 @@ export function GameForm({
   collection,
   onLibrary,
   onConnectSteam,
+  onEditExisting,
   onSave,
   onClose,
 }: {
@@ -24,6 +25,7 @@ export function GameForm({
   collection: Collection;
   onLibrary: (library: SteamLibrary) => boolean;
   onConnectSteam: () => void;
+  onEditExisting: (game: Game) => void;
   onSave: (game: Game) => void;
   onClose: () => void;
 }) {
@@ -189,13 +191,16 @@ export function GameForm({
             }
             onLibrary={onLibrary}
             onConnect={onConnectSteam}
+            onEditExisting={onEditExisting}
           />
         ) : (
           <CatalogPicker
+            ownedGames={collection.steamLibrary?.games}
             draft={draft}
             games={games}
             onSelect={selectGame}
             onArtwork={selectArtwork}
+            onEditExisting={onEditExisting}
           />
         )}
         <label>

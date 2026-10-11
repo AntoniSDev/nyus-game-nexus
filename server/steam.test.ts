@@ -14,6 +14,26 @@ const player = {
   communityvisibilitystate: 3,
   ignored: "private",
 };
+test("Steam avatars are optional, normalized and restricted to official image hosts", async () => {
+  for (const avatar of [
+    "https://avatars.steamstatic.com/abcdef_full.jpg",
+    "https://evil.test/a.jpg",
+    "https://avatars.steamstatic.com/abcdef.jpg?token=secret",
+  ]) {
+    const response = await handleSteam(ctx(), "library", async (input) =>
+      Response.json(
+        String(input).includes("GetPlayerSummaries")
+          ? { response: { players: [{ ...player, avatarfull: avatar }] } }
+          : { response: { game_count: 0 } },
+      ),
+    );
+    const body = (await response.json()) as { profile: { avatarUrl?: string } };
+    assert.equal(
+      body.profile.avatarUrl,
+      avatar.endsWith("_full.jpg") ? avatar : undefined,
+    );
+  }
+});
 test("Steam resolves a vanity profile and returns public hours without exposing auth or unknown data", async () => {
   const requests: string[] = [];
   const response = await handleSteam(

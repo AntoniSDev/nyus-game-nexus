@@ -10,6 +10,28 @@ export const steamDate = (v: unknown): v is string =>
   typeof v === "string" && v.length <= 100 && Number.isFinite(Date.parse(v));
 export const steamMinutes = (v: unknown): v is number =>
   typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
+export function steamAvatarUrl(v: unknown): string | undefined {
+  if (typeof v !== "string" || v.length > 2048) return;
+  try {
+    const url = new URL(v);
+    if (
+      url.protocol === "https:" &&
+      !url.username &&
+      !url.password &&
+      [
+        "avatars.steamstatic.com",
+        "avatars.akamai.steamstatic.com",
+        "avatars.cloudflare.steamstatic.com",
+      ].includes(url.hostname) &&
+      /^\/[a-f0-9]+(?:_full|_medium)?\.(?:jpg|png)$/i.test(url.pathname) &&
+      !url.search &&
+      !url.hash
+    )
+      return url.href;
+  } catch {
+    /* Optional untrusted avatar is never rendered. */
+  }
+}
 export function validateSteamProfile(p: unknown): SteamProfile {
   if (
     !record(p) ||
@@ -19,7 +41,8 @@ export function validateSteamProfile(p: unknown): SteamProfile {
     !p.displayName.trim() ||
     p.displayName.length > 160 ||
     p.profileUrl !== `https://steamcommunity.com/profiles/${p.steamId64}/` ||
-    !steamDate(p.lastSyncedAt)
+    !steamDate(p.lastSyncedAt) ||
+    (p.avatarUrl !== undefined && !steamAvatarUrl(p.avatarUrl))
   )
     throw new Error("Profil Steam invalide.");
   return {
@@ -27,6 +50,9 @@ export function validateSteamProfile(p: unknown): SteamProfile {
     displayName: p.displayName,
     profileUrl: p.profileUrl,
     lastSyncedAt: p.lastSyncedAt,
+    ...(p.avatarUrl !== undefined
+      ? { avatarUrl: steamAvatarUrl(p.avatarUrl)! }
+      : {}),
   };
 }
 export function validateSteamLibrary(v: unknown): SteamLibrary {

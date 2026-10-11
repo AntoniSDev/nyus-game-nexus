@@ -66,6 +66,7 @@ async function upstream(
   path: string,
   key: string,
   fetcher: Fetcher,
+  single = false,
 ): Promise<unknown[]> {
   const url = `https://www.steamgriddb.com/api/v2/${path}`;
   const cache = (
@@ -96,18 +97,23 @@ async function upstream(
       "Le catalogue ne répond pas correctement. Réessayez ou ajoutez le jeu manuellement.",
     );
   const body: unknown = await response.json();
-  if (!record(body) || body.success !== true || !Array.isArray(body.data))
+  if (
+    !record(body) ||
+    body.success !== true ||
+    !(single ? record(body.data) : Array.isArray(body.data))
+  )
     throw new CatalogError(502, "La réponse du catalogue est invalide.");
+  const data = single ? [body.data] : (body.data as unknown[]);
   if (cache)
     await cache
       .put(
         cacheKey,
-        Response.json(body.data, {
+        Response.json(data, {
           headers: { "Cache-Control": "public, max-age=900" },
         }),
       )
       .catch(() => {});
-  return body.data;
+  return data;
 }
 async function artwork(
   id: number,
@@ -151,6 +157,17 @@ export async function handleCatalog(
     const params = new URL(context.request.url).searchParams;
     const query = params.get("q")?.trim() ?? "";
     const rawId = params.get("id") ?? "";
+    const rawSteamIds = params.get("steamAppIds");
+    const steamIds =
+      rawSteamIds === null ? [] : rawSteamIds.split(",").map(Number);
+    if (
+      kind === "search" &&
+      rawSteamIds !== null &&
+      (!/^[1-9]\d{0,9}(?:,[1-9]\d{0,9}){0,9}$/.test(rawSteamIds) ||
+        steamIds.some((id) => !positiveId(id) || id > 4294967295) ||
+        new Set(steamIds).size !== steamIds.length)
+    )
+      return json({ error: "Identifiants Steam invalides." }, 400);
     if (
       kind === "search" &&
       (query.length < 2 ||
@@ -226,6 +243,25 @@ export async function handleCatalog(
           game.artwork = (await artwork(game.id, key, fetcher))[0];
         } catch {
           /* Search remains usable when a thumbnail request fails. */
+        }
+      }),
+    );
+    // Titles only shortlist candidates in the client. Ownership requires an
+    // official Steam app ID → SteamGridDB game ID mapping plus the owned snapshot.
+    await Promise.all(
+      steamIds.map(async (appId) => {
+        try {
+          const [mapped] = await upstream(
+            `games/steam/${appId}`,
+            key,
+            fetcher,
+            true,
+          );
+          if (!record(mapped) || !positiveId(mapped.id)) return;
+          const game = games.find((g) => g.id === mapped.id);
+          if (game) game.steamAppId = appId;
+        } catch {
+          /* No mapping means no ownership badge, never a title fallback. */
         }
       }),
     );

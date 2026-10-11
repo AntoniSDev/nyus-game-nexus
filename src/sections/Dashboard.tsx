@@ -8,9 +8,14 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  MoonStar,
+  Sparkles,
+  Heart,
 } from "lucide-react";
 import { statuses, type Collection, type Game } from "../types";
 import { GameCard } from "../components/GameCard";
+import { SanctuaryArt } from "../components/SanctuaryArt";
+import { worldTheme } from "../components/WorldArtwork";
 export function Dashboard({
   collection,
   onAdd,
@@ -45,6 +50,7 @@ export function Dashboard({
       value: collection.categories.length,
       icon: FolderHeart,
       color: "pink",
+      caption: "autant de portes à ouvrir",
     },
     {
       label: "Jeux actifs",
@@ -53,62 +59,79 @@ export function Dashboard({
       ).length,
       icon: Gamepad2,
       color: "teal",
+      caption: "vos aventures du moment",
     },
     {
       label: "Jeux terminés",
       value: collection.games.filter((g) => g.status === "Terminé").length,
       icon: CheckCheck,
       color: "purple",
+      caption: "de précieux souvenirs",
     },
     {
       label: "En attente",
       value: collection.games.filter((g) => g.status === "En attente").length,
       icon: Clock3,
       color: "amber",
+      caption: "chaque monde a son heure",
     },
   ];
   return (
     <>
+      <div className="welcome-line">
+        <span>
+          <MoonStar size={16} /> Un petit refuge, rien qu’à vous.
+        </span>
+        <span>✧ Faites une place à la magie</span>
+      </div>
       <section className="hero">
         <div className="hero-copy">
           <div className="eyebrow">
-            <span /> VOTRE ESPACE GAMING PERSONNEL
+            <Sparkles size={13} /> NYU’S PERSONAL GAMING SANCTUARY
           </div>
           <h1>
-            Moins de backlog.
+            Bienvenue dans
             <br />
-            <span>Plus d’aventures.</span>
+            <span>votre petit univers.</span>
           </h1>
           <p>
-            Un jeu principal par genre. Prenez le temps d’explorer
-            <br className="desktop-break" /> les univers qui vous attendent
-            déjà.
+            Vos mondes préférés, une aventure à la fois.
+            <br className="desktop-break" /> Ici, on joue pour le plaisir. Le
+            reste peut attendre.
           </p>
-          <button className="primary" onClick={onAdd}>
-            <Plus size={18} /> Ajouter un jeu
-          </button>
+          <div className="hero-actions">
+            <button className="primary" onClick={onAdd}>
+              <Plus size={18} /> Ajouter un jeu <Sparkles size={15} />
+            </button>
+            <a className="hero-link" href="#collection">
+              Explorer mes mondes <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <div className="hero-whisper">
+            <Heart size={12} /> Un jeu par genre. Tout le temps pour en
+            profiter.
+          </div>
         </div>
         <div className="hero-art" aria-hidden="true">
-          <div className="hero-ring ring-a" />
-          <div className="hero-ring ring-b" />
-          <div className="hero-ring ring-c" />
-          <div className="hero-controller">
-            <Gamepad2 size={100} strokeWidth={1} />
-          </div>
-          <span className="floating-star star-a">✦</span>
-          <span className="floating-star star-b">✧</span>
-          <div className="hero-tag">✦ Le plaisir de jouer, simplement.</div>
+          <SanctuaryArt />
+          <span className="hero-art-caption">
+            votre gardien des petites aventures ✧
+          </span>
         </div>
       </section>
       <section className="stats" aria-label="Statistiques de la collection">
         {stats.map((s) => (
-          <div className="stat" key={s.label}>
+          <div className={`stat stat-${s.color}`} key={s.label}>
+            <span className="stat-spark" aria-hidden="true">
+              ✧
+            </span>
             <div className={`stat-icon ${s.color}`}>
               <s.icon size={21} />
             </div>
             <div>
               <strong>{s.value.toString().padStart(2, "0")}</strong>
               <span>{s.label}</span>
+              <small>{s.caption}</small>
             </div>
           </div>
         ))}
@@ -116,7 +139,9 @@ export function Dashboard({
       <section className="collection-section" id="collection">
         <div className="section-title">
           <div>
-            <div className="eyebrow">VOS PROCHAINS UNIVERS</div>
+            <div className="eyebrow">
+              <Sparkles size={13} /> UNE COLLECTION DE PETITS MONDES
+            </div>
             <h2>
               Ma collection <span>{collection.games.length}</span>
             </h2>
@@ -125,6 +150,10 @@ export function Dashboard({
             <SlidersHorizontal size={16} /> Gérer les catégories
           </button>
         </div>
+        <p className="collection-intro">
+          Des univers à retrouver, des souvenirs à créer. Choisissez la porte
+          qui vous appelle.
+        </p>
         <div className="filters">
           <div className="search">
             <Search size={18} />
@@ -206,10 +235,15 @@ export function Dashboard({
         <div className="game-grid">
           {collection.categories
             .filter((c) => filtered.some((g) => g.categoryId === c.id))
-            .map((c, i) => (
-              <section className="category-group" key={c.id}>
+            .map((c) => (
+              <section
+                className={`category-group world-${worldTheme(c.name)}`}
+                key={c.id}
+              >
                 <div className="category-heading">
-                  <span className={`category-dot dot-${i % 4}`} />
+                  <span className="category-gem" aria-hidden="true">
+                    ✦
+                  </span>
                   <h3>{c.name}</h3>
                   <span>
                     {filtered
@@ -224,9 +258,7 @@ export function Dashboard({
                     <GameCard
                       key={g.id}
                       game={g}
-                      index={collection.categories.findIndex(
-                        (c) => c.id === g.categoryId,
-                      )}
+                      categoryName={c.name}
                       onEdit={() => onEdit(g)}
                       onDelete={() => onDelete(g)}
                       onStatus={(s) => onStatus(g, s)}

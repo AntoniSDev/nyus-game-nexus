@@ -2,6 +2,10 @@
 
 Un espace gaming personnel pour profiter de ses jeux, avec un jeu principal par genre et plusieurs candidats possibles. Interface française responsive, turquoise Miku × rose Madoka, sans illustrations officielles.
 
+L’identité « Nyu’s personal gaming sanctuary » réunit un familier lunaire original, un portail céleste et huit paysages décoratifs selon le genre. Les illustrations sont des SVG locaux, sans requête externe ; elles servent de placeholders et ne représentent pas les jaquettes officielles des jeux. Les couleurs et effets sont centralisés dans `src/styles/theme.css`, les illustrations dans `SanctuaryArt.tsx` et `WorldArtwork.tsx`. L’animation légère du familier est désactivée avec `prefers-reduced-motion`. Les catégories personnalisées reçoivent un décor déterministe, stable pendant les recherches et filtres.
+
+`GameCover.tsx` privilégie les vraies jaquettes : image entière sans recadrage, en portrait ou paysage, sur une ambiance floutée tirée de la même image. Les SVG sont uniquement le fallback sans URL ou en cas d’erreur ; les bordures, badges et accents de catégorie restent présents avec une vraie image. Une future intégration de catalogue pourra fournir `coverUrl` sans changer cette présentation. La récupération automatique de jaquettes ne fait pas partie de cette passe UI.
+
 ## Installation et développement
 
 Node.js 22.12+ (ou 24) et npm sont nécessaires.

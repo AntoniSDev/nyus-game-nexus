@@ -24,7 +24,7 @@ test("catalog search authenticates server-side and returns only normalized publi
       "Bearer test-only-private-token",
     );
     assert.ok(!url.includes("test-only-private-token"));
-    assert.equal(init?.redirect, "error");
+    assert.equal(init?.redirect, "manual");
     return Response.json({
       success: true,
       data: url.includes("search/autocomplete")
@@ -101,6 +101,23 @@ test("invalid requests and missing secrets never reach the provider", async () =
     }),
   };
   assert.equal((await handleCatalog(post, "search", never)).status, 405);
+});
+test("provider redirects are rejected without forwarding the authentication header", async () => {
+  let calls = 0;
+  const response = await handleCatalog(
+    context("search?q=test"),
+    "search",
+    async (_input, init) => {
+      calls++;
+      assert.equal(init?.redirect, "manual");
+      return new Response(null, {
+        status: 302,
+        headers: { Location: "https://other.test" },
+      });
+    },
+  );
+  assert.equal(response.status, 502);
+  assert.equal(calls, 1);
 });
 test("upstream auth, quota, network and malformed responses are handled without disclosure", async () => {
   for (const [status, expected] of [

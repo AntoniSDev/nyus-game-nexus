@@ -77,7 +77,7 @@ async function upstream(
   const response = await fetcher(url, {
     headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
     signal: AbortSignal.timeout(8000),
-    redirect: "error",
+    redirect: "manual",
   });
   if (response.status === 429)
     throw new CatalogError(

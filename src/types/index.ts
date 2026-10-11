@@ -3,6 +3,7 @@ import type {
   CoverCredit,
   SteamGameMetadata,
 } from "./catalog";
+import type { SteamProfile } from "./steam";
 export const statuses = [
   "Sélectionné",
   "En cours",
@@ -36,4 +37,5 @@ export interface Collection {
   schemaVersion: 1;
   categories: Category[];
   games: Game[];
+  steamProfile?: SteamProfile;
 }

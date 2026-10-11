@@ -1,5 +1,7 @@
 import { statuses, type Collection, type Game } from "../types";
 import { newCollection } from "../data/newCollection";
+import { validSteamId } from "./steamProfile";
+import type { SteamProfile } from "../types/steam";
 import type {
   CatalogReference,
   CoverCredit,
@@ -27,6 +29,19 @@ function steamMetadata(v: unknown): SteamGameMetadata {
   if (!isRecord(v) || !positiveId(v.appId))
     throw new Error("Métadonnées Steam invalides.");
   const result: SteamGameMetadata = { appId: v.appId };
+  if (v.steamId64 !== undefined) {
+    if (typeof v.steamId64 !== "string" || !validSteamId(v.steamId64))
+      throw new Error("Profil Steam invalide.");
+    result.steamId64 = v.steamId64;
+  }
+  if (v.achievementsSyncedAt !== undefined) {
+    if (
+      !text(v.achievementsSyncedAt, 100) ||
+      !Number.isFinite(Date.parse(v.achievementsSyncedAt))
+    )
+      throw new Error("Date des succès invalide.");
+    result.achievementsSyncedAt = v.achievementsSyncedAt;
+  }
   if (v.playtimeMinutes !== undefined) {
     if (
       typeof v.playtimeMinutes !== "number" ||
@@ -80,6 +95,26 @@ export function validateCollection(value: unknown): Collection {
     throw new Error("Cette sauvegarde est trop volumineuse.");
   const categoryIds = new Set<string>();
   const gameIds = new Set<string>();
+  let profile: SteamProfile | undefined;
+  if (value.steamProfile !== undefined) {
+    const p = value.steamProfile;
+    if (
+      !isRecord(p) ||
+      typeof p.steamId64 !== "string" ||
+      !validSteamId(p.steamId64) ||
+      !text(p.displayName, 160) ||
+      p.profileUrl !== `https://steamcommunity.com/profiles/${p.steamId64}/` ||
+      !text(p.lastSyncedAt, 100) ||
+      !Number.isFinite(Date.parse(p.lastSyncedAt))
+    )
+      throw new Error("Profil Steam de sauvegarde invalide.");
+    profile = {
+      steamId64: p.steamId64,
+      displayName: p.displayName,
+      profileUrl: p.profileUrl,
+      lastSyncedAt: p.lastSyncedAt,
+    };
+  }
   for (const c of value.categories) {
     if (
       !isRecord(c) ||
@@ -119,6 +154,7 @@ export function validateCollection(value: unknown): Collection {
   // Keep only schema fields, never carry unknown imported properties forward.
   return {
     schemaVersion: 1,
+    ...(profile ? { steamProfile: profile } : {}),
     categories: value.categories.map((c) => ({ id: c.id, name: c.name })),
     games: value.games.map((g) => ({
       id: g.id,
@@ -151,6 +187,13 @@ export function saveCollection(
   storage.setItem(STORAGE_KEY, JSON.stringify(validateCollection(collection)));
 }
 export function upsertGame(collection: Collection, game: Game): Collection {
+  if (
+    game.steam &&
+    collection.games.some(
+      (g) => g.id !== game.id && g.steam?.appId === game.steam?.appId,
+    )
+  )
+    throw new Error("Ce jeu Steam est déjà dans votre collection.");
   if (
     game.catalog &&
     collection.games.some(

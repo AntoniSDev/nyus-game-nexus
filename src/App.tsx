@@ -16,14 +16,18 @@ import { upsertGame, validateCollection } from "./utils/collection";
 import type { Collection, Game } from "./types";
 import { FamiliarMark } from "./components/SanctuaryArt";
 import { BuildVersion } from "./components/BuildVersion";
+import { SteamLibrary } from "./components/SteamLibrary";
 export default function App() {
   const { collection, update, error, setError } = useCollection();
   const [form, setForm] = useState<Game | "new" | null>(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [steamOpen, setSteamOpen] = useState(false);
   const [pendingImport, setPendingImport] = useState<Collection | null>(null);
   const [notice, setNotice] = useState("");
+  const [newCategoryId, setNewCategoryId] = useState<string>();
   const fileRef = useRef<HTMLInputElement>(null);
-  function add() {
+  function add(categoryId?: string) {
+    setNewCategoryId(categoryId);
     if (!collection?.categories.length) {
       setCategoriesOpen(true);
       setNotice("Créez une catégorie avant d’ajouter votre premier jeu.");
@@ -109,6 +113,16 @@ export default function App() {
             <strong>Mon sanctuaire</strong>
           </div>
           <div className="backup-actions">
+            <button
+              className="text-button"
+              aria-label="Bibliothèque Steam"
+              title="Bibliothèque Steam"
+              onClick={() => setSteamOpen(true)}
+              disabled={!collection}
+            >
+              <Gamepad2 size={16} />
+              <span>Steam</span>
+            </button>
             <button
               className="text-button"
               onClick={exportJSON}
@@ -215,6 +229,7 @@ export default function App() {
         <GameForm
           game={form === "new" ? undefined : form}
           categories={collection.categories}
+          initialCategoryId={newCategoryId}
           games={collection.games}
           onClose={() => setForm(null)}
           onSave={(g) => {
@@ -231,6 +246,13 @@ export default function App() {
           collection={collection}
           onUpdate={update}
           onClose={() => setCategoriesOpen(false)}
+        />
+      )}
+      {steamOpen && collection && (
+        <SteamLibrary
+          collection={collection}
+          onUpdate={update}
+          onClose={() => setSteamOpen(false)}
         />
       )}
       {pendingImport && (

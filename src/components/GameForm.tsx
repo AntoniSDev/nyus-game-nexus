@@ -8,12 +8,14 @@ export function GameForm({
   game,
   categories,
   games,
+  initialCategoryId,
   onSave,
   onClose,
 }: {
   game?: Game;
   categories: Category[];
   games: Game[];
+  initialCategoryId?: string;
   onSave: (game: Game) => void;
   onClose: () => void;
 }) {
@@ -21,7 +23,7 @@ export function GameForm({
     game ?? {
       id: crypto.randomUUID(),
       name: "",
-      categoryId: categories[0]?.id ?? "",
+      categoryId: initialCategoryId ?? categories[0]?.id ?? "",
       status: "Sélectionné",
       coverUrl: "",
       notes: "",
@@ -50,7 +52,12 @@ export function GameForm({
         catalog: { provider: "steamgriddb" as const, id: item.id },
         coverUrl: item.artwork?.url ?? "",
       };
-      delete next.steam;
+      if (
+        d.catalog?.id !== item.id &&
+        d.name.trim().toLocaleLowerCase() !==
+          item.name.trim().toLocaleLowerCase()
+      )
+        delete next.steam;
       if (item.artwork)
         next.coverCredit = {
           provider: "steamgriddb",

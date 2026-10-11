@@ -147,7 +147,8 @@ option {
     0 0 0 5px #f6a5c805;
   transform: rotate(-5deg);
 }
-.brand-icon svg {
+.brand-icon svg,
+.brand-icon img {
   width: 100%;
   height: 100%;
 }
@@ -816,7 +817,7 @@ h1 span {
   border-radius: 5px;
 }
 .has-landscape-cover {
-  --mini-width: clamp(90px, 36%, 116px);
+  --mini-width: clamp(70px, 29%, 94px);
 }
 .mini-cover {
   display: block;
@@ -839,7 +840,7 @@ h1 span {
     box-shadow 0.25s;
 }
 .mini-cover-landscape {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 2 / 3;
 }
 .mini-cover-pin {
   position: absolute;
@@ -1835,4 +1836,229 @@ dialog > p {
     animation: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* V5: categories are quiet little worlds, with cards nested inside. */
+.game-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  align-items: start;
+}
+.category-group {
+  padding: 17px;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 24%, transparent);
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--world-accent) 7%, #171b2b),
+    #141827
+  );
+  box-shadow: 0 8px 26px #00000012;
+}
+.category-heading {
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 17px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--world-accent) 18%, transparent);
+}
+.category-title {
+  flex: 1;
+  min-width: 0;
+}
+.category-title h3 {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--world-accent);
+  line-height: 1.35;
+}
+.category-title p {
+  font-size: 10px;
+  color: #b4abc9;
+  margin: 5px 0 0;
+  line-height: 1.5;
+}
+.category-heading > .category-count:last-child {
+  display: grid;
+  text-align: center;
+  flex-shrink: 0;
+  padding: 5px 9px;
+  font-size: 19px;
+  color: var(--world-accent);
+  background: color-mix(in srgb, var(--world-accent) 6%, transparent);
+  border-color: color-mix(in srgb, var(--world-accent) 24%, transparent);
+}
+.category-count small {
+  font:
+    9px "Trebuchet MS",
+    sans-serif;
+  color: #c5b9d2;
+}
+.category-emblem {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 13px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--world-accent) 30%, transparent);
+}
+.category-emblem svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.category-games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 14px;
+}
+.category-games .game-card {
+  margin: 0;
+}
+.category-invitation {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 17px 8px;
+  font-size: 11px;
+  color: var(--world-accent);
+  border: 1px dashed color-mix(in srgb, var(--world-accent) 25%, transparent);
+  border-radius: 12px;
+  background: #14182740;
+}
+.empty-nyu {
+  display: block;
+  margin-inline: auto;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 10px;
+}
+.cover-hint {
+  position: absolute;
+  z-index: 2;
+  bottom: 13px;
+  right: 10px;
+  font-size: 8px;
+  color: #d2f1e9;
+  background: #182636ca;
+  padding: 3px 5px;
+  border-radius: 6px;
+  max-width: 47%;
+  line-height: 1.4;
+}
+.illustrated-cover .world-caption {
+  max-width: 47%;
+}
+@media (max-width: 950px) {
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 500px) {
+  .category-group {
+    padding: 12px;
+  }
+  .category-title h3 {
+    font-size: 16px;
+  }
+  .category-emblem {
+    width: 40px;
+    height: 40px;
+  }
+  .category-heading {
+    gap: 9px;
+  }
+}
+.steam-intro {
+  margin-bottom: 18px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.steam-message {
+  margin: 15px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--soft-mint);
+}
+.steam-library {
+  display: grid;
+  gap: 14px;
+}
+.steam-profile {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #82dec90b;
+}
+.steam-profile a {
+  color: var(--soft-mint);
+  font-size: 12px;
+}
+.steam-profile small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.steam-search {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+}
+.steam-search input,
+.steam-search select {
+  width: 100%;
+}
+.steam-games {
+  max-height: 350px;
+  overflow-y: auto;
+  display: grid;
+  gap: 8px;
+}
+.steam-game {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: grid;
+  gap: 5px;
+}
+.steam-game label {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  font-size: 12px;
+}
+.steam-game input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  accent-color: #85e0cc;
+}
+.steam-game label span {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.steam-game small {
+  color: #b7adca;
+  font-size: 10px;
+}
+.steam-card-data {
+  display: grid;
+  gap: 4px;
+  color: #b5dcd3;
+  font-size: 10px;
+  line-height: 1.5;
+  margin: 10px 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+}
+.steam-card-data small {
+  font-size: 9px;
+  color: var(--muted);
 }

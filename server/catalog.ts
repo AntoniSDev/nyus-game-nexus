@@ -46,7 +46,7 @@ function json(value: unknown, status = 200) {
 
 // A bounded per-isolate burst guard. Cloudflare WAF can add a global rate limit.
 const bursts = new Map<string, { since: number; count: number }>();
-function allowRequest(request: Request) {
+export function allowRequest(request: Request) {
   const ip = request.headers.get("CF-Connecting-IP");
   if (!ip) return true;
   const now = Date.now();
@@ -113,9 +113,10 @@ async function artwork(
   id: number,
   key: string,
   fetcher: Fetcher,
+  platform: "game" | "steam" = "game",
 ): Promise<CatalogArtwork[]> {
   const data = await upstream(
-    `grids/game/${id}?types=static&mimes=image%2Fpng,image%2Fjpeg,image%2Fwebp&nsfw=false&humor=false&epilepsy=false&limit=12`,
+    `grids/${platform}/${id}?types=static&mimes=image%2Fpng,image%2Fjpeg,image%2Fwebp&nsfw=false&humor=false&epilepsy=false&limit=12`,
     key,
     fetcher,
   );
@@ -141,7 +142,7 @@ async function artwork(
 }
 export async function handleCatalog(
   context: CatalogContext,
-  kind: "search" | "artwork",
+  kind: "search" | "artwork" | "steam-artwork",
   fetcher: Fetcher = fetch,
 ): Promise<Response> {
   try {
@@ -158,7 +159,7 @@ export async function handleCatalog(
     )
       return json({ error: "Saisissez entre 2 et 160 caractères." }, 400);
     if (
-      kind === "artwork" &&
+      kind !== "search" &&
       (!/^[1-9]\d{0,9}$/.test(rawId) || !positiveId(Number(rawId)))
     )
       return json({ error: "Identifiant de jeu invalide." }, 400);
@@ -176,8 +177,15 @@ export async function handleCatalog(
         },
         503,
       );
-    if (kind === "artwork")
-      return json({ artwork: await artwork(Number(rawId), key, fetcher) });
+    if (kind !== "search")
+      return json({
+        artwork: await artwork(
+          Number(rawId),
+          key,
+          fetcher,
+          kind === "steam-artwork" ? "steam" : "game",
+        ),
+      });
     const data = await upstream(
       `search/autocomplete/${encodeURIComponent(query)}`,
       key,

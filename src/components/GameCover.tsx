@@ -57,6 +57,13 @@ export function GameCover({
       <span className={`status-badge status-${statuses.indexOf(status)}`}>
         {status}
       </span>
+      {!hasCover && (
+        <span className="cover-hint">
+          {coverUrl
+            ? "Jaquette indisponible · modifier ↗"
+            : "Ajouter une jaquette ↗"}
+        </span>
+      )}
       <span className="cover-edit" aria-hidden="true">
         <ArrowUpRight size={18} />
       </span>

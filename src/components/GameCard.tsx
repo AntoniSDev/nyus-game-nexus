@@ -48,6 +48,31 @@ export function GameCard({
           </p>
         )}
         {game.notes && <p className="game-note">{game.notes}</p>}
+        {game.steam && (
+          <div className="steam-card-data">
+            <span>
+              Steam ·{" "}
+              {game.steam.playtimeMinutes === undefined
+                ? "heures non publiques"
+                : `${(game.steam.playtimeMinutes / 60).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h jouées`}
+            </span>
+            {game.steam.achievements && (
+              <span>
+                {game.steam.achievements.unlocked}/
+                {game.steam.achievements.total} succès
+                {game.steam.achievementsSyncedAt
+                  ? ` · ${new Date(game.steam.achievementsSyncedAt).toLocaleDateString("fr-FR")}`
+                  : ""}
+              </span>
+            )}
+            {game.steam.lastSyncedAt && (
+              <small>
+                Steam actualisé le{" "}
+                {new Date(game.steam.lastSyncedAt).toLocaleDateString("fr-FR")}
+              </small>
+            )}
+          </div>
+        )}
         {game.waitingReason && (
           <p className="game-note">{game.waitingReason}</p>
         )}

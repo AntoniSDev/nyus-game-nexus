@@ -31,6 +31,6 @@ export default defineConfig({
   },
   plugins: [react(), tailwindcss()],
   server: {
-    proxy: { "/api/catalog": "http://127.0.0.1:8788" },
+    proxy: { "/api": "http://127.0.0.1:8788" },
   },
 });

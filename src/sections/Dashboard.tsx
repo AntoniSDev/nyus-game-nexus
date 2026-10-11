@@ -15,7 +15,11 @@ import {
 import { statuses, type Collection, type Game } from "../types";
 import { GameCard } from "../components/GameCard";
 import { SanctuaryArt } from "../components/SanctuaryArt";
-import { worldTheme } from "../components/WorldArtwork";
+import {
+  worldTheme,
+  worldCaptions,
+  WorldArtwork,
+} from "../components/WorldArtwork";
 export function Dashboard({
   collection,
   onAdd,
@@ -25,7 +29,7 @@ export function Dashboard({
   onCategories,
 }: {
   collection: Collection;
-  onAdd: () => void;
+  onAdd: (categoryId?: string) => void;
   onEdit: (game: Game) => void;
   onDelete: (game: Game) => void;
   onStatus: (game: Game, status: Game["status"]) => void;
@@ -100,7 +104,7 @@ export function Dashboard({
             reste peut attendre.
           </p>
           <div className="hero-actions">
-            <button className="primary" onClick={onAdd}>
+            <button className="primary" onClick={() => onAdd()}>
               <Plus size={18} /> Ajouter un jeu <Sparkles size={15} />
             </button>
             <a className="hero-link" href="#collection">
@@ -115,7 +119,7 @@ export function Dashboard({
         <div className="hero-art" aria-hidden="true">
           <SanctuaryArt />
           <span className="hero-art-caption">
-            votre gardien des petites aventures ✧
+            Nyu, votre gardienne des petites aventures ✧
           </span>
         </div>
       </section>
@@ -209,7 +213,11 @@ export function Dashboard({
         </div>
         {filtered.length === 0 && (
           <div className="empty">
-            <Gamepad2 size={40} />
+            {collection.games.length ? (
+              <Gamepad2 size={40} />
+            ) : (
+              <img className="empty-nyu" src="/nyu-mark.svg" alt="" />
+            )}
             <h3>
               {collection.games.length
                 ? "Aucun jeu ne correspond"
@@ -240,36 +248,63 @@ export function Dashboard({
         )}
         <div className="game-grid">
           {collection.categories
-            .filter((c) => filtered.some((g) => g.categoryId === c.id))
+            .filter(
+              (c) =>
+                filtered.some((g) => g.categoryId === c.id) ||
+                (!search &&
+                  status === "Tous" &&
+                  (category === "Toutes" || category === c.id)),
+            )
             .map((c) => (
               <section
                 className={`category-group world-${worldTheme(c.name)}`}
                 key={c.id}
+                aria-label={`Univers ${c.name}`}
               >
                 <div className="category-heading">
-                  <span className="category-gem" aria-hidden="true">
-                    ✦
-                  </span>
-                  <h3>{c.name}</h3>
-                  <span>
+                  <div className="category-emblem" aria-hidden="true">
+                    <WorldArtwork theme={worldTheme(c.name)} />
+                  </div>
+                  <div className="category-title">
+                    <h3>{c.name}</h3>
+                    <p>{worldCaptions[worldTheme(c.name)]}</p>
+                  </div>
+                  <span className="category-count">
                     {filtered
                       .filter((g) => g.categoryId === c.id)
                       .length.toString()
-                      .padStart(2, "0")}
+                      .padStart(2, "0")}{" "}
+                    <small>
+                      jeu
+                      {filtered.filter((g) => g.categoryId === c.id).length ===
+                      1
+                        ? ""
+                        : "x"}
+                    </small>
                   </span>
                 </div>
-                {filtered
-                  .filter((g) => g.categoryId === c.id)
-                  .map((g) => (
-                    <GameCard
-                      key={g.id}
-                      game={g}
-                      categoryName={c.name}
-                      onEdit={() => onEdit(g)}
-                      onDelete={() => onDelete(g)}
-                      onStatus={(s) => onStatus(g, s)}
-                    />
-                  ))}
+                <div className="category-games">
+                  {filtered
+                    .filter((g) => g.categoryId === c.id)
+                    .map((g) => (
+                      <GameCard
+                        key={g.id}
+                        game={g}
+                        categoryName={c.name}
+                        onEdit={() => onEdit(g)}
+                        onDelete={() => onDelete(g)}
+                        onStatus={(s) => onStatus(g, s)}
+                      />
+                    ))}
+                  {filtered.every((g) => g.categoryId !== c.id) && (
+                    <button
+                      className="category-invitation"
+                      onClick={() => onAdd(c.id)}
+                    >
+                      <Plus size={16} /> Ouvrir une première aventure
+                    </button>
+                  )}
+                </div>
               </section>
             ))}
         </div>

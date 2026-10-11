@@ -21,9 +21,11 @@ export interface CatalogGame {
 // Future Steam synchronization is independent of personal collection fields.
 export interface SteamGameMetadata {
   appId: number;
+  steamId64?: string;
   playtimeMinutes?: number;
   achievements?: { unlocked: number; total: number };
   lastSyncedAt?: string;
+  achievementsSyncedAt?: string;
 }
 export interface SteamProfileMetadata {
   steamId64: string;

@@ -1,38 +1,9 @@
+import { NyuCharacter } from "./NyuCharacter";
 import { useId } from "react";
 
-/** Original vector familiar: a little moon cat, drawn for Nyu's sanctuary. */
 export function FamiliarMark() {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <path
-        d="M13 31 10 10 27 22M37 22 54 10 51 32"
-        fill="#9ee4dc"
-        stroke="#64cfc7"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path d="m14 15 10 10-8 3m34-13-10 10 8 3" fill="#f6a5c8" />
-      <ellipse cx="32" cy="36" rx="24" ry="20" fill="#c8f2ea" />
-      <path
-        d="M20 34q4-5 8 0m8 0q4-5 8 0"
-        stroke="#314455"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="m29 41 3 3 3-3"
-        stroke="#314455"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <ellipse cx="18" cy="40" rx="5" ry="2.5" fill="#f6a5c8" />
-      <ellipse cx="46" cy="40" rx="5" ry="2.5" fill="#f6a5c8" />
-      <path d="m32 18 2-4 2 4-2 4z" fill="#f5f3ff" />
-    </svg>
-  );
+  return <img src="/nyu-mark.svg" alt="" aria-hidden="true" />;
 }
-
 export function SanctuaryArt() {
   const id = useId();
   return (
@@ -140,83 +111,7 @@ export function SanctuaryArt() {
         fillOpacity=".8"
       />
       <path d="M136 329q112 30 226-1" stroke="#f5d6e7" strokeOpacity=".55" />
-      <g className="familiar-float">
-        <path
-          d="M299 263c41 11 43-41 17-40-16 1-12 19-2 17"
-          stroke="#9fdfd4"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-        <ellipse cx="249" cy="259" rx="50" ry="41" fill={`url(#${id}-cat)`} />
-        <path
-          d="m202 197-8-59q0-7 7-2l38 29m23 0 39-32q7-5 7 3l-8 63"
-          fill={`url(#${id}-cat)`}
-          stroke="#83d6cc"
-          strokeWidth="2"
-          strokeLinejoin="round"
-        />
-        <path d="m203 148 4 35 21-12m68-25-22 25 18 12" fill="#f2b4cf" />
-        <path
-          d="M198 203c0-38 24-49 53-49 30 0 54 13 54 49 0 31-24 51-54 51s-53-20-53-51Z"
-          fill={`url(#${id}-cat)`}
-        />
-        <path
-          d="M220 198q8-9 16 0m29 0q8-9 16 0"
-          stroke="#314455"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-        <path
-          d="m247 211 4 3 4-3m-4 3v4m-7 0q7 7 14 0"
-          stroke="#314455"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <ellipse
-          cx="216"
-          cy="211"
-          rx="9"
-          ry="4.5"
-          fill="#efa4c4"
-          fillOpacity=".75"
-        />
-        <ellipse
-          cx="284"
-          cy="211"
-          rx="9"
-          ry="4.5"
-          fill="#efa4c4"
-          fillOpacity=".75"
-        />
-        <path d="m249 168 3-7 3 7-3 7Z" fill="#fff9ec" />
-        <path
-          d="M237 251c-21-18-27 8-9 8l12-3m15-5c21-18 27 8 9 8l-12-3"
-          fill="#f6a5c8"
-          stroke="#dc8eb4"
-          strokeWidth="1.2"
-        />
-        <circle cx="247" cy="255" r="5" fill="#ffe4ee" />
-        <path d="m239 260-8 15 11-3 3-13m8 1 9 14-12-3-2-12" fill="#f6a5c8" />
-        <path
-          d="M224 274c-5-4-17 1-17 11s11 10 19 5m47-16c5-4 17 1 17 11s-11 10-19 5"
-          fill="#c0eee4"
-        />
-        <path
-          d="M224 282c3-9 10-15 18-11h16c8-4 15 2 18 11l3 11c1 8-8 13-14 6l-7-7h-16l-7 7c-6 7-15 2-14-6Z"
-          fill="#393753"
-          stroke="#dfb9e1"
-          strokeWidth="1.5"
-        />
-        <path
-          d="M233 280v9m-4-4h8"
-          stroke="#91e2d4"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-        <circle cx="265" cy="281" r="2" fill="#f6a5c8" />
-        <circle cx="269" cy="286" r="2" fill="#a78bfa" />
-      </g>
+      <NyuCharacter />
       <g stroke="#f6a5c8" strokeOpacity=".5" strokeWidth="1">
         <path d="m106 165 9-40 35-12m218 121 39-12 18 28" />
         <circle cx="106" cy="165" r="3" fill="#f6a5c8" />

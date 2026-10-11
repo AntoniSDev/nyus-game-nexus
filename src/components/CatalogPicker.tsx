@@ -138,6 +138,18 @@ export function CatalogPicker({
   }
   return (
     <section className="catalog-picker" aria-label="Catalogue de jeux">
+      {draft.name && !draft.catalog && (
+        <button
+          type="button"
+          className="catalog-toggle"
+          onClick={() => {
+            setManual(false);
+            setQuery(draft.name);
+          }}
+        >
+          Trouver une jaquette pour {draft.name}
+        </button>
+      )}
       <div className="catalog-heading">
         <strong>✧ Trouver votre prochain monde</strong>
         <button

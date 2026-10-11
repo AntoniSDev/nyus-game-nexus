@@ -23,24 +23,18 @@ export const worldCaptions = [
   "L’appel du voyage",
   "Entre ombre et braise",
 ];
-const palettes = [
-  ["#182e38", "#294c50", "#84d5b7"],
-  ["#332a46", "#514165", "#e7b1db"],
-  ["#292444", "#453468", "#bca3f5"],
-  ["#1b3242", "#335c69", "#91d5db"],
-  ["#352637", "#613b52", "#eea7b7"],
-  ["#2d2b48", "#5a496b", "#efbfdc"],
-  ["#282640", "#544165", "#ddc2f5"],
-  ["#2d293e", "#504058", "#f0bed1"],
-];
 
 /** Decorative genre landscapes, never presented as actual game covers. */
 export function WorldArtwork({ theme }: { theme: number }) {
   const id = useId();
-  const [sky, hill, light] = palettes[theme];
+  const [sky, hill, light] = [
+    "var(--world-sky)",
+    "var(--world-hill)",
+    "var(--world-light)",
+  ];
   return (
     <svg
-      className="world-artwork"
+      className={`world-artwork world-${theme}`}
       viewBox="0 0 360 240"
       fill="none"
       aria-hidden="true"
@@ -52,7 +46,7 @@ export function WorldArtwork({ theme }: { theme: number }) {
           <stop offset="1" stopColor={hill} />
         </linearGradient>
         <radialGradient id={`${id}-glow`}>
-          <stop stopColor={light} stopOpacity=".22" />
+          <stop stopColor={light} stopOpacity=".4" />
           <stop offset="1" stopColor={light} stopOpacity="0" />
         </radialGradient>
       </defs>

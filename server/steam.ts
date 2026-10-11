@@ -52,9 +52,44 @@ async function api(
     throw new SteamError(502, "La réponse Steam est invalide.");
   return data;
 }
+async function achievementStats(
+  steamId: string,
+  appId: string,
+  key: string,
+  fetcher: typeof fetch,
+) {
+  const body = await api(
+    "ISteamUserStats/GetPlayerAchievements/v1",
+    { steamid: steamId, appid: appId, l: "french" },
+    key,
+    fetcher,
+  );
+  const lastSyncedAt = new Date().toISOString();
+  const stats = body.playerstats;
+  if (
+    !record(stats) ||
+    stats.success !== true ||
+    !Array.isArray(stats.achievements)
+  )
+    return { available: false, lastSyncedAt };
+  const achievements = stats.achievements.filter(
+    (a) =>
+      record(a) &&
+      typeof a.apiname === "string" &&
+      (a.achieved === 0 || a.achieved === 1),
+  );
+  if (achievements.length !== stats.achievements.length)
+    throw new SteamError(502, "La réponse des succès Steam est invalide.");
+  return {
+    available: true,
+    unlocked: achievements.filter((a) => a.achieved === 1).length,
+    total: achievements.length,
+    lastSyncedAt,
+  };
+}
 export async function handleSteam(
   context: SteamContext,
-  kind: "library" | "achievements",
+  kind: "library" | "achievements" | "achievement-batch",
   fetcher: typeof fetch = fetch,
 ): Promise<Response> {
   const respond = (data: unknown, status = 200) =>
@@ -77,6 +112,20 @@ export async function handleSteam(
       return respond({ error: (e as Error).message }, 400);
     }
     const rawApp = params.get("appId") ?? "";
+    const validApp = (v: string) =>
+      /^[1-9]\d{0,9}$/.test(v) && Number(v) <= 4294967295;
+    const appIds = (params.get("appIds") ?? "").split(",");
+    if (
+      kind === "achievement-batch" &&
+      (input.kind !== "id" ||
+        appIds.length > 10 ||
+        new Set(appIds).size !== appIds.length ||
+        !appIds.every(validApp))
+    )
+      return respond(
+        { error: "Choisissez de 1 à 10 jeux Steam valides." },
+        400,
+      );
     if (
       kind === "achievements" &&
       (input.kind !== "id" ||
@@ -116,34 +165,30 @@ export async function handleSteam(
       steamId = body.response.steamid;
     }
     const lastSyncedAt = new Date().toISOString();
-    if (kind === "achievements") {
-      const body = await api(
-        "ISteamUserStats/GetPlayerAchievements/v1",
-        { steamid: steamId, appid: rawApp, l: "french" },
-        key,
-        fetcher,
+    if (kind === "achievement-batch") {
+      const entries = await Promise.all(
+        appIds.map(async (appId) => {
+          try {
+            return {
+              appId,
+              data: await achievementStats(steamId, appId, key, fetcher),
+            };
+          } catch {
+            return { appId, data: undefined };
+          }
+        }),
       );
-      const stats = body.playerstats;
-      if (
-        !record(stats) ||
-        stats.success !== true ||
-        !Array.isArray(stats.achievements)
-      )
-        return respond({ available: false, lastSyncedAt });
-      const achievements = stats.achievements.filter(
-        (a) =>
-          record(a) &&
-          typeof a.apiname === "string" &&
-          (a.achieved === 0 || a.achieved === 1),
-      );
-      if (achievements.length !== stats.achievements.length)
-        throw new SteamError(502, "La réponse des succès Steam est invalide.");
       return respond({
-        available: true,
-        unlocked: achievements.filter((a) => a.achieved === 1).length,
-        total: achievements.length,
-        lastSyncedAt,
+        results: Object.fromEntries(
+          entries.filter((e) => e.data).map((e) => [e.appId, e.data]),
+        ),
+        failedAppIds: entries
+          .filter((e) => !e.data)
+          .map((e) => Number(e.appId)),
       });
+    }
+    if (kind === "achievements") {
+      return respond(await achievementStats(steamId, rawApp, key, fetcher));
     }
     const summary = await api(
       "ISteamUser/GetPlayerSummaries/v2",
@@ -183,6 +228,7 @@ export async function handleSteam(
       (!Array.isArray(library.games) && library.game_count !== 0)
     )
       return respond({ profile, games: [], libraryVisible: false });
+    const seenApps = new Set<number>();
     const games: SteamLibraryGame[] = (
       Array.isArray(library.games) ? library.games : []
     )
@@ -199,10 +245,23 @@ export async function handleSteam(
         )
           return [];
         const minutes = item.playtime_forever;
+        const recent = item.playtime_2weeks;
+        const lastPlayed = item.rtime_last_played;
         return [
           {
             appId: item.appid,
             name: item.name,
+            ...(typeof recent === "number" &&
+            Number.isSafeInteger(recent) &&
+            recent >= 0
+              ? { playtimeTwoWeeksMinutes: recent }
+              : {}),
+            ...(typeof lastPlayed === "number" &&
+            Number.isSafeInteger(lastPlayed) &&
+            lastPlayed > 0 &&
+            lastPlayed <= Date.now() / 1000 + 300
+              ? { lastPlayedAt: new Date(lastPlayed * 1000).toISOString() }
+              : {}),
             ...(typeof minutes === "number" &&
             Number.isSafeInteger(minutes) &&
             minutes >= 0
@@ -211,9 +270,11 @@ export async function handleSteam(
           },
         ];
       })
-      .filter(
-        (g, i, all) => all.findIndex((other) => other.appId === g.appId) === i,
-      )
+      .filter((g) => {
+        if (seenApps.has(g.appId)) return false;
+        seenApps.add(g.appId);
+        return true;
+      })
       .slice(0, 10000);
     return respond({ profile, games, libraryVisible: true });
   } catch (e) {

@@ -1,14 +1,19 @@
 import { useState, type FormEvent } from "react";
-import { statuses, type Category, type Game } from "../types";
+import { statuses, type Category, type Game, type Collection } from "../types";
 import { validCover } from "../utils/collection";
 import { Modal } from "./Modal";
 import { CatalogPicker } from "./CatalogPicker";
 import type { CatalogArtwork, CatalogGame } from "../types/catalog";
+import { SteamGamePicker } from "./SteamGamePicker";
+import type { SteamLibrary } from "../types/steam";
 export function GameForm({
   game,
   categories,
   games,
   initialCategoryId,
+  collection,
+  onLibrary,
+  onConnectSteam,
   onSave,
   onClose,
 }: {
@@ -16,6 +21,9 @@ export function GameForm({
   categories: Category[];
   games: Game[];
   initialCategoryId?: string;
+  collection: Collection;
+  onLibrary: (library: SteamLibrary) => boolean;
+  onConnectSteam: () => void;
   onSave: (game: Game) => void;
   onClose: () => void;
 }) {
@@ -33,6 +41,9 @@ export function GameForm({
     },
   );
   const [error, setError] = useState("");
+  const [source, setSource] = useState<"steam" | "catalog">(
+    game && !game.steam ? "catalog" : "steam",
+  );
   function field<K extends keyof Game>(key: K, value: Game[K]) {
     setDraft((d) => {
       const next = { ...d, [key]: value };
@@ -90,6 +101,17 @@ export function GameForm({
   function submit(e: FormEvent) {
     e.preventDefault();
     if (
+      draft.steam &&
+      games.some(
+        (g) => g.id !== draft.id && g.steam?.appId === draft.steam?.appId,
+      )
+    ) {
+      setError(
+        "Ce jeu Steam est déjà dans votre collection. Modifiez sa carte existante.",
+      );
+      return;
+    }
+    if (
       draft.catalog &&
       games.some(
         (g) =>
@@ -127,12 +149,55 @@ export function GameForm({
       onClose={onClose}
     >
       <form onSubmit={submit} className="form">
-        <CatalogPicker
-          draft={draft}
-          games={games}
-          onSelect={selectGame}
-          onArtwork={selectArtwork}
-        />
+        <div className="game-source">
+          <strong>Choisir parmi mes mondes</strong>
+          <div
+            className="source-tabs"
+            role="group"
+            aria-label="Source de recherche"
+          >
+            <button
+              type="button"
+              aria-pressed={source === "steam"}
+              onClick={() => setSource("steam")}
+            >
+              Ma bibliothèque Steam
+            </button>
+            <button
+              type="button"
+              aria-pressed={source === "catalog"}
+              onClick={() => setSource("catalog")}
+            >
+              Catalogue externe / manuel
+            </button>
+          </div>
+        </div>
+        {source === "steam" ? (
+          <SteamGamePicker
+            key={collection.steamProfile?.steamId64 ?? "none"}
+            collection={collection}
+            draft={draft}
+            onSelect={(selected) =>
+              setDraft((current) => ({
+                ...current,
+                name: selected.name,
+                steam: selected.steam,
+                coverUrl: selected.coverUrl,
+                catalog: selected.catalog,
+                coverCredit: selected.coverCredit,
+              }))
+            }
+            onLibrary={onLibrary}
+            onConnect={onConnectSteam}
+          />
+        ) : (
+          <CatalogPicker
+            draft={draft}
+            games={games}
+            onSelect={selectGame}
+            onArtwork={selectArtwork}
+          />
+        )}
         <label>
           Nom du jeu
           <input

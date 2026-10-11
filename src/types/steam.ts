@@ -8,6 +8,8 @@ export interface SteamLibraryGame {
   appId: number;
   name: string;
   playtimeMinutes?: number;
+  playtimeTwoWeeksMinutes?: number;
+  lastPlayedAt?: string;
 }
 export interface SteamLibrary {
   profile: SteamProfile;

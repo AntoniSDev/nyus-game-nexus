@@ -1,4 +1,5 @@
 import type { SteamAchievements, SteamLibrary } from "../types/steam";
+import { validateSteamLibrary } from "./steamValidation";
 async function request<T>(path: string, signal: AbortSignal): Promise<T> {
   const response = await fetch(`/api/steam/${path}`, {
     headers: { Accept: "application/json" },
@@ -13,10 +14,12 @@ async function request<T>(path: string, signal: AbortSignal): Promise<T> {
     );
   return data as T;
 }
-export const steamLibrary = (profile: string, signal: AbortSignal) =>
-  request<SteamLibrary>(
-    `library?profile=${encodeURIComponent(profile)}`,
-    signal,
+export const steamLibrary = async (profile: string, signal: AbortSignal) =>
+  validateSteamLibrary(
+    await request<SteamLibrary>(
+      `library?profile=${encodeURIComponent(profile)}`,
+      signal,
+    ),
   );
 export const steamAchievements = (
   profile: string,
@@ -25,5 +28,17 @@ export const steamAchievements = (
 ) =>
   request<SteamAchievements>(
     `achievements?profile=${encodeURIComponent(profile)}&appId=${appId}`,
+    signal,
+  );
+export const steamAchievementBatch = (
+  profile: string,
+  appIds: number[],
+  signal: AbortSignal,
+) =>
+  request<{
+    results: Record<number, SteamAchievements>;
+    failedAppIds: number[];
+  }>(
+    `achievement-batch?profile=${encodeURIComponent(profile)}&appIds=${appIds.join(",")}`,
     signal,
   );

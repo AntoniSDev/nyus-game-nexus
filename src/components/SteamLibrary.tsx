@@ -8,9 +8,15 @@ import type {
 import type { CatalogArtwork } from "../types/catalog";
 import { Modal } from "./Modal";
 import { parseSteamProfile } from "../utils/steamProfile";
-import { steamLibrary, steamAchievements } from "../utils/steamClient";
+import {
+  steamLibrary,
+  steamAchievements,
+  steamAchievementBatch,
+} from "../utils/steamClient";
 import { catalogRequest } from "../utils/catalogClient";
 import { mergeSteamGame, steamGameMatch } from "../utils/steamCollection";
+import { synchronizeSteam } from "../utils/steamSync";
+import { SteamData } from "./SteamData";
 export function SteamLibrary({
   collection,
   onUpdate,
@@ -23,7 +29,9 @@ export function SteamLibrary({
   const [profile, setProfile] = useState(
     collection.steamProfile?.profileUrl ?? "",
   );
-  const [library, setLibrary] = useState<Library>();
+  const [library, setLibrary] = useState<Library | undefined>(
+    collection.steamLibrary,
+  );
   const [search, setSearch] = useState("");
   const [categoryId, setCategoryId] = useState(
     collection.categories[0]?.id ?? "",
@@ -58,7 +66,8 @@ export function SteamLibrary({
     try {
       const data = await steamLibrary(url, signal);
       if (signal.aborted) return;
-      if (!onUpdate({ ...collection, steamProfile: data.profile }))
+      const sync = await synchronizeSteam(collection, data, signal);
+      if (!onUpdate(sync.collection))
         throw new Error(
           "Le profil n’a pas pu être sauvegardé. Votre collection a été conservée.",
         );
@@ -66,14 +75,13 @@ export function SteamLibrary({
       setSelected([]);
       setAchievements({});
       setMessage(
-        data.libraryVisible
-          ? `${data.games.length} jeux accessibles. Choisissez ceux à accueillir dans le Nexus.`
-          : "Le profil ou ses détails de jeux sont privés. Rendez-les publics dans les paramètres de confidentialité Steam pour afficher la bibliothèque.",
+        `${data.games.length} jeux accessibles. ${sync.updated} ${sync.updated === 1 ? "jeu lié synchronisé" : "jeux liés synchronisés"}. Choisissez ceux à accueillir dans le Nexus.${sync.failed ? " Certains succès n’ont pas pu être actualisés ; les observations précédentes sont conservées." : ""}`,
       );
     } catch (e) {
       if (!signal.aborted) {
-        setLibrary(undefined);
-        setError((e as Error).message);
+        setError(
+          `${(e as Error).message} La bibliothèque et les jeux déjà enregistrés restent disponibles.`,
+        );
       }
     } finally {
       if (!signal.aborted) setBusy(false);
@@ -89,10 +97,25 @@ export function SteamLibrary({
         signal,
       );
       if (!signal.aborted) {
+        const old = steamGameMatch(collection, game);
+        if (
+          old?.steam?.steamId64 === library.profile.steamId64 &&
+          !onUpdate(
+            mergeSteamGame(
+              collection,
+              library,
+              game,
+              old.categoryId,
+              undefined,
+              data,
+            ),
+          )
+        )
+          throw new Error("Les succès n’ont pas pu être sauvegardés.");
         setAchievements((values) => ({ ...values, [game.appId]: data }));
         setMessage(
           data.available
-            ? `Succès récupérés pour ${game.name}. Ajoutez ou actualisez ce jeu pour les conserver.`
+            ? `Succès récupérés pour ${game.name}.${old?.steam?.steamId64 === library.profile.steamId64 ? " Observation sauvegardée." : " Ajoutez ou associez ce jeu pour les conserver."}`
             : `Les succès de ${game.name} ne sont pas publics ou ce jeu n’en propose pas.`,
         );
       }
@@ -117,22 +140,34 @@ export function SteamLibrary({
     const signal = begin();
     let next = collection;
     let missingArt = 0;
+    let missingStats = 0;
+    let currentAchievements = achievements;
     try {
       if (refresh) {
         snapshot = await steamLibrary(library.profile.steamId64, signal);
-        if (!snapshot.libraryVisible)
-          throw new Error(
-            "Les détails Steam ne sont plus publics. Les données enregistrées ont été conservées.",
-          );
-        if (signal.aborted) return;
+        const sync = await synchronizeSteam(collection, snapshot, signal);
+        if (!onUpdate(sync.collection))
+          throw new Error("La synchronisation n’a pas pu être sauvegardée.");
         setLibrary(snapshot);
-        games = snapshot.games.filter((g) =>
-          collection.games.some(
-            (existing) =>
-              existing.steam?.appId === g.appId &&
-              existing.steam.steamId64 === snapshot.profile.steamId64,
-          ),
+        setSelected([]);
+        setMessage(
+          `${sync.updated} jeux liés synchronisés : heures, activité et succès. Vos notes, statuts et jaquettes sont conservés.${sync.failed ? " Certains succès sont temporairement indisponibles ; leurs dernières observations sont conservées." : ""}`,
         );
+        return;
+      }
+      if (games.length) {
+        try {
+          const stats = await steamAchievementBatch(
+            snapshot.profile.steamId64,
+            games.map((g) => g.appId),
+            signal,
+          );
+          currentAchievements = { ...achievements, ...stats.results };
+          missingStats = stats.failedAppIds.length;
+        } catch {
+          signal.throwIfAborted();
+          missingStats = games.length;
+        }
       }
       for (const game of games) {
         let image: CatalogArtwork | undefined;
@@ -155,7 +190,7 @@ export function SteamLibrary({
           game,
           categoryId,
           image,
-          achievements[game.appId],
+          currentAchievements[game.appId],
         );
       }
       if (!onUpdate(next))
@@ -164,7 +199,7 @@ export function SteamLibrary({
         );
       setSelected([]);
       setMessage(
-        `${games.length} ${games.length === 1 ? "jeu" : "jeux"} ${refresh ? (games.length === 1 ? "actualisé" : "actualisés") : games.length === 1 ? "ajouté ou associé" : "ajoutés ou associés"}. Vos catégories, statuts et notes ont été conservés.${missingArt ? " Certaines jaquettes sont indisponibles ; les décors restent visibles." : ""}`,
+        `${games.length} ${games.length === 1 ? "jeu ajouté ou associé" : "jeux ajoutés ou associés"}. Vos catégories, statuts et notes ont été conservés.${missingArt ? " Certaines jaquettes sont indisponibles ; les décors restent visibles." : ""}${missingStats ? " Certains succès restent à consulter." : ""}`,
       );
     } catch (e) {
       if (!signal.aborted) setError((e as Error).message);
@@ -189,13 +224,18 @@ export function SteamLibrary({
             autoFocus
             maxLength={200}
             required
+            disabled={busy}
             value={profile}
             onChange={(e) => setProfile(e.target.value)}
             placeholder="https://steamcommunity.com/id/…"
           />
         </label>
         <button type="submit" className="primary" disabled={busy}>
-          {busy ? "Connexion en cours…" : "Charger la bibliothèque"}
+          {busy
+            ? "Synchronisation en cours…"
+            : collection.steamProfile
+              ? "Synchroniser ma bibliothèque"
+              : "Charger la bibliothèque"}
         </button>
       </form>
       {error && (
@@ -218,7 +258,7 @@ export function SteamLibrary({
               Voir le profil public ↗
             </a>
             <small>
-              Consulté le{" "}
+              Bibliothèque synchronisée le{" "}
               {new Date(library.profile.lastSyncedAt).toLocaleString("fr-FR")}
             </small>
           </div>
@@ -235,6 +275,26 @@ export function SteamLibrary({
                 {filtered.slice(0, 100).map((game) => {
                   const old = steamGameMatch(collection, game);
                   const stats = achievements[game.appId];
+                  const linked =
+                    old?.steam?.steamId64 === library.profile.steamId64
+                      ? old.steam
+                      : undefined;
+                  const observation = stats
+                    ? {
+                        ...(stats.available &&
+                        stats.unlocked !== undefined &&
+                        stats.total !== undefined
+                          ? {
+                              achievements: {
+                                unlocked: stats.unlocked,
+                                total: stats.total,
+                              },
+                              achievementsSyncedAt: stats.lastSyncedAt,
+                            }
+                          : {}),
+                        achievementsAvailable: stats.available,
+                      }
+                    : linked;
                   return (
                     <div className="steam-game" key={game.appId}>
                       <label>
@@ -257,20 +317,20 @@ export function SteamLibrary({
                         <span>
                           <strong>{game.name}</strong>
                           <small>
-                            {game.playtimeMinutes === undefined
-                              ? "Heures non publiques"
-                              : `${(game.playtimeMinutes / 60).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h jouées`}
-                            {old ? " · Déjà dans le Nexus" : ""}
+                            {old ? "Déjà dans le Nexus" : "Possédé sur Steam"}
                           </small>
-                          {stats && (
-                            <small>
-                              {stats.available
-                                ? `${stats.unlocked}/${stats.total} succès`
-                                : "Succès indisponibles"}
-                            </small>
-                          )}
                         </span>
                       </label>
+                      <SteamData
+                        compact
+                        steam={{
+                          ...observation,
+                          appId: game.appId,
+                          playtimeMinutes: game.playtimeMinutes,
+                          playtimeTwoWeeksMinutes: game.playtimeTwoWeeksMinutes,
+                          lastPlayedAt: game.lastPlayedAt,
+                        }}
+                      />
                       <button
                         type="button"
                         className="catalog-toggle"

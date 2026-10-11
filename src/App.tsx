@@ -17,6 +17,7 @@ import type { Collection, Game } from "./types";
 import { FamiliarMark } from "./components/SanctuaryArt";
 import { BuildVersion } from "./components/BuildVersion";
 import { SteamLibrary } from "./components/SteamLibrary";
+import { cacheSteamLibrary } from "./utils/steamCollection";
 export default function App() {
   const { collection, update, error, setError } = useCollection();
   const [form, setForm] = useState<Game | "new" | null>(null);
@@ -69,10 +70,21 @@ export default function App() {
         <div className="brand-tagline">a little magic, a lot of games.</div>
         <div className="sidebar-label">✧ VOTRE PETIT UNIVERS</div>
         <nav aria-label="Navigation principale">
-          <a className="nav-item active" href="#">
+          <a className={`nav-item ${steamOpen ? "" : "active"}`} href="#">
             <MoonStar size={19} /> Mon sanctuaire{" "}
             <span className="nav-dot">✦</span>
           </a>
+          <button
+            className={`nav-item steam-nav ${steamOpen ? "active" : ""}`}
+            aria-current={steamOpen ? "page" : undefined}
+            onClick={() => setSteamOpen(true)}
+            disabled={!collection}
+          >
+            <Gamepad2 size={19} /> Ma bibliothèque Steam{" "}
+            <span className="nav-dot" aria-hidden="true">
+              ✧
+            </span>
+          </button>
           <a className="nav-item" href="#collection">
             <Gamepad2 size={19} /> Mes petits mondes
           </a>
@@ -179,6 +191,7 @@ export default function App() {
               onAdd={add}
               onEdit={setForm}
               onCategories={() => setCategoriesOpen(true)}
+              onSteam={() => setSteamOpen(true)}
               onDelete={(g) => {
                 if (
                   window.confirm(
@@ -231,6 +244,14 @@ export default function App() {
           categories={collection.categories}
           initialCategoryId={newCategoryId}
           games={collection.games}
+          collection={collection}
+          onLibrary={(library) =>
+            update(cacheSteamLibrary(collection, library))
+          }
+          onConnectSteam={() => {
+            setForm(null);
+            setSteamOpen(true);
+          }}
           onClose={() => setForm(null)}
           onSave={(g) => {
             try {

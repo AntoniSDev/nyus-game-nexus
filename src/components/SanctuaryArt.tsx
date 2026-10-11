@@ -1,8 +1,7 @@
-import { NyuCharacter } from "./NyuCharacter";
 import { useId } from "react";
 
 export function FamiliarMark() {
-  return <img src="/nyu-mark.svg" alt="" aria-hidden="true" />;
+  return <img src="/nyu-emblem.svg" alt="" aria-hidden="true" />;
 }
 export function SanctuaryArt() {
   const id = useId();
@@ -41,17 +40,6 @@ export function SanctuaryArt() {
           <stop stopColor="#73ded3" />
           <stop offset=".5" stopColor="#a78bfa" />
           <stop offset="1" stopColor="#f6a5c8" />
-        </linearGradient>
-        <linearGradient
-          id={`${id}-cat`}
-          x1="196"
-          y1="155"
-          x2="290"
-          y2="282"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop stopColor="#d3fff3" />
-          <stop offset="1" stopColor="#8acfc8" />
         </linearGradient>
         <linearGradient
           id={`${id}-cloud`}
@@ -111,7 +99,15 @@ export function SanctuaryArt() {
         fillOpacity=".8"
       />
       <path d="M136 329q112 30 226-1" stroke="#f5d6e7" strokeOpacity=".55" />
-      <NyuCharacter />
+      <image
+        className="familiar-float"
+        href="/nyu-mascot.png"
+        x="82"
+        y="22"
+        width="338"
+        height="338"
+        preserveAspectRatio="xMidYMid meet"
+      />
       <g stroke="#f6a5c8" strokeOpacity=".5" strokeWidth="1">
         <path d="m106 165 9-40 35-12m218 121 39-12 18 28" />
         <circle cx="106" cy="165" r="3" fill="#f6a5c8" />

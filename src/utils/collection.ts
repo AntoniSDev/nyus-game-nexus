@@ -2,6 +2,11 @@ import { statuses, type Collection, type Game } from "../types";
 import { newCollection } from "../data/newCollection";
 import { validSteamId } from "./steamProfile";
 import type { SteamProfile } from "../types/steam";
+import {
+  steamDate,
+  steamMinutes,
+  validateSteamLibrary,
+} from "./steamValidation";
 import type {
   CatalogReference,
   CoverCredit,
@@ -29,6 +34,21 @@ function steamMetadata(v: unknown): SteamGameMetadata {
   if (!isRecord(v) || !positiveId(v.appId))
     throw new Error("Métadonnées Steam invalides.");
   const result: SteamGameMetadata = { appId: v.appId };
+  if (v.playtimeTwoWeeksMinutes !== undefined) {
+    if (!steamMinutes(v.playtimeTwoWeeksMinutes))
+      throw new Error("Temps récent Steam invalide.");
+    result.playtimeTwoWeeksMinutes = v.playtimeTwoWeeksMinutes;
+  }
+  if (v.lastPlayedAt !== undefined) {
+    if (!steamDate(v.lastPlayedAt))
+      throw new Error("Dernière activité Steam invalide.");
+    result.lastPlayedAt = v.lastPlayedAt;
+  }
+  if (v.achievementsAvailable !== undefined) {
+    if (typeof v.achievementsAvailable !== "boolean")
+      throw new Error("Disponibilité des succès invalide.");
+    result.achievementsAvailable = v.achievementsAvailable;
+  }
   if (v.steamId64 !== undefined) {
     if (typeof v.steamId64 !== "string" || !validSteamId(v.steamId64))
       throw new Error("Profil Steam invalide.");
@@ -151,10 +171,22 @@ export function validateCollection(value: unknown): Collection {
       );
     gameIds.add(g.id);
   }
+  const library =
+    value.steamLibrary !== undefined
+      ? validateSteamLibrary(value.steamLibrary)
+      : undefined;
+  if (
+    library &&
+    (!profile ||
+      library.profile.steamId64 !== profile.steamId64 ||
+      !library.libraryVisible)
+  )
+    throw new Error("Bibliothèque et profil Steam incohérents.");
   // Keep only schema fields, never carry unknown imported properties forward.
   return {
     schemaVersion: 1,
     ...(profile ? { steamProfile: profile } : {}),
+    ...(library ? { steamLibrary: library } : {}),
     categories: value.categories.map((c) => ({ id: c.id, name: c.name })),
     games: value.games.map((g) => ({
       id: g.id,

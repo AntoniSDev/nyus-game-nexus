@@ -15,6 +15,7 @@ import {
 import { statuses, type Collection, type Game } from "../types";
 import { GameCard } from "../components/GameCard";
 import { SanctuaryArt } from "../components/SanctuaryArt";
+import { SteamPanel } from "../components/SteamPanel";
 import {
   worldTheme,
   worldCaptions,
@@ -27,6 +28,7 @@ export function Dashboard({
   onDelete,
   onStatus,
   onCategories,
+  onSteam,
 }: {
   collection: Collection;
   onAdd: (categoryId?: string) => void;
@@ -34,6 +36,7 @@ export function Dashboard({
   onDelete: (game: Game) => void;
   onStatus: (game: Game, status: Game["status"]) => void;
   onCategories: () => void;
+  onSteam: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("Tous");
@@ -112,7 +115,7 @@ export function Dashboard({
             </a>
           </div>
           <div className="hero-whisper">
-            <Heart size={12} /> Un jeu par genre. Tout le temps pour en
+            <Heart size={12} /> Vos jeux, à votre rythme. Tout le temps pour en
             profiter.
           </div>
         </div>
@@ -123,6 +126,7 @@ export function Dashboard({
           </span>
         </div>
       </section>
+      <SteamPanel collection={collection} onOpen={onSteam} />
       <section className="stats" aria-label="Statistiques de la collection">
         {stats.map((s) => (
           <div className={`stat stat-${s.color}`} key={s.label}>
@@ -216,7 +220,7 @@ export function Dashboard({
             {collection.games.length ? (
               <Gamepad2 size={40} />
             ) : (
-              <img className="empty-nyu" src="/nyu-mark.svg" alt="" />
+              <img className="empty-nyu" src="/nyu-emblem.svg" alt="" />
             )}
             <h3>
               {collection.games.length

@@ -18,11 +18,14 @@ export interface CatalogGame {
   artwork?: CatalogArtwork;
 }
 
-// Future Steam synchronization is independent of personal collection fields.
+// Public Steam observations stay separate from personal collection fields.
 export interface SteamGameMetadata {
   appId: number;
   steamId64?: string;
   playtimeMinutes?: number;
+  playtimeTwoWeeksMinutes?: number;
+  lastPlayedAt?: string;
+  achievementsAvailable?: boolean;
   achievements?: { unlocked: number; total: number };
   lastSyncedAt?: string;
   achievementsSyncedAt?: string;

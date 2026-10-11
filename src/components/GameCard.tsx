@@ -1,58 +1,41 @@
-import { useState } from "react";
-import { ArrowUpRight, Gamepad2, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Sparkles } from "lucide-react";
 import { statuses, type Game } from "../types";
+import { worldTheme } from "./WorldArtwork";
+import { GameCover } from "./GameCover";
 export function GameCard({
   game,
-  index,
+  categoryName,
   onEdit,
   onDelete,
   onStatus,
 }: {
   game: Game;
-  index: number;
+  categoryName: string;
   onEdit: () => void;
   onDelete: () => void;
   onStatus: (status: Game["status"]) => void;
 }) {
-  const [failedUrl, setFailedUrl] = useState("");
+  const theme = worldTheme(categoryName);
   return (
-    <article className="game-card">
-      <div className={`cover cover-${index % 4}`}>
-        {game.coverUrl && failedUrl !== game.coverUrl ? (
-          <img
-            src={game.coverUrl}
-            alt={`Jaquette de ${game.name}`}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            onError={() => setFailedUrl(game.coverUrl)}
-          />
-        ) : (
-          <div className="cover-art" aria-hidden="true">
-            <div className="orbit orbit-one" />
-            <div className="orbit orbit-two" />
-            <Gamepad2 size={48} strokeWidth={1} />
-            <span>NYU’S NEXUS</span>
-          </div>
-        )}
-        <span
-          className={`status-badge status-${statuses.indexOf(game.status)}`}
-        >
-          {game.status}
-        </span>
-        <button
-          className="cover-edit"
-          aria-label={`Modifier ${game.name}`}
-          onClick={onEdit}
-        >
-          <ArrowUpRight size={18} />
-        </button>
-      </div>
+    <article className={`game-card world-${theme}`}>
+      <GameCover
+        name={game.name}
+        coverUrl={game.coverUrl}
+        status={game.status}
+        theme={theme}
+        onEdit={onEdit}
+      />
       <div className="card-body">
         <h3>{game.name}</h3>
         {game.progress ? (
           <p className="progress">{game.progress}</p>
         ) : (
-          <p className="muted">Une aventure à votre rythme.</p>
+          <p className="muted">
+            <Sparkles size={11} aria-hidden="true" />
+            {game.status === "Terminé"
+              ? "Un précieux souvenir de plus."
+              : "Chaque aventure a son rythme."}
+          </p>
         )}
         {game.notes && <p className="game-note">{game.notes}</p>}
         {game.waitingReason && (

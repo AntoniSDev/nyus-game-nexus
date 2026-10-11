@@ -3,7 +3,8 @@ import {
   Download,
   FolderHeart,
   Gamepad2,
-  LayoutDashboard,
+  MoonStar,
+  Heart,
   Upload,
 } from "lucide-react";
 import { useCollection } from "./hooks/useCollection";
@@ -13,6 +14,7 @@ import { Modal } from "./components/Modal";
 import { Dashboard } from "./sections/Dashboard";
 import { upsertGame, validateCollection } from "./utils/collection";
 import type { Collection, Game } from "./types";
+import { FamiliarMark } from "./components/SanctuaryArt";
 export default function App() {
   const { collection, update, error, setError } = useCollection();
   const [form, setForm] = useState<Game | "new" | null>(null);
@@ -53,19 +55,21 @@ export default function App() {
       <aside className="sidebar">
         <a className="brand" href="#" aria-label="Nyu’s Game Nexus, accueil">
           <div className="brand-icon">
-            <Gamepad2 size={25} />
+            <FamiliarMark />
           </div>
           <span>
             Nyu’s<span className="brand-sub">GAME NEXUS</span>
           </span>
         </a>
-        <div className="sidebar-label">VOTRE NEXUS</div>
+        <div className="brand-tagline">a little magic, a lot of games.</div>
+        <div className="sidebar-label">✧ VOTRE PETIT UNIVERS</div>
         <nav aria-label="Navigation principale">
           <a className="nav-item active" href="#">
-            <LayoutDashboard size={19} /> Dashboard <span className="nav-dot" />
+            <MoonStar size={19} /> Mon sanctuaire{" "}
+            <span className="nav-dot">✦</span>
           </a>
           <a className="nav-item" href="#collection">
-            <Gamepad2 size={19} /> Ma collection
+            <Gamepad2 size={19} /> Mes petits mondes
           </a>
           <button
             className="nav-item"
@@ -77,27 +81,31 @@ export default function App() {
         </nav>
         <div className="sidebar-bottom">
           <div className="philosophy">
-            <span>✦</span>
+            <span className="philosophy-moon" aria-hidden="true">
+              <MoonStar size={27} />
+              <span>✧</span>
+            </span>
             <strong>
-              Chaque jeu mérite
+              Pas de course.
               <br />
-              son moment.
+              Juste des aventures.
             </strong>
             <p>
-              Votre collection.
+              Installez-vous, respirez.
               <br />
-              Votre rythme. Votre plaisir.
+              Votre prochain monde vous attend.
             </p>
           </div>
           <span className="version">
-            NEXUS v1.0 <span>LOCAL & PERSONNEL</span>
+            NYU’S NEXUS <span>✧ MADE WITH LOVE</span>
           </span>
         </div>
       </aside>
       <div className="main-wrapper">
         <header className="topbar">
           <div className="breadcrumb">
-            Votre Nexus <span>/</span> <strong>Dashboard</strong>
+            <MoonStar size={16} /> Votre Nexus <span>✧</span>{" "}
+            <strong>Mon sanctuaire</strong>
           </div>
           <div className="backup-actions">
             <button
@@ -116,7 +124,7 @@ export default function App() {
               <span>Importer</span>
             </button>
             <div className="avatar" aria-label="Collection personnelle">
-              N
+              <Heart size={15} />
             </div>
           </div>
           <input
@@ -197,7 +205,7 @@ export default function App() {
               <span className="local-dot" /> Vos données restent dans ce
               navigateur
             </span>
-            <span>Fait pour jouer, à votre rythme. ✦</span>
+            <span>Un peu de magie. Beaucoup de petits bonheurs. ✧</span>
           </footer>
         </main>
       </div>

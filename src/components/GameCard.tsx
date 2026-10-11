@@ -27,6 +27,16 @@ export function GameCard({
       />
       <div className="card-body">
         <h3>{game.name}</h3>
+        {game.coverCredit && (
+          <a
+            className="cover-credit"
+            href={`https://www.steamgriddb.com/grid/${game.coverCredit.id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Jaquette : {game.coverCredit.author} · SteamGridDB ↗
+          </a>
+        )}
         {game.progress ? (
           <p className="progress">{game.progress}</p>
         ) : (

@@ -30,4 +30,7 @@ export default defineConfig({
     __BUILD_ID__: JSON.stringify(buildId()),
   },
   plugins: [react(), tailwindcss()],
+  server: {
+    proxy: { "/api/catalog": "http://127.0.0.1:8788" },
+  },
 });

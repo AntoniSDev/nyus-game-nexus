@@ -1,10 +1,65 @@
 import { statuses, type Collection, type Game } from "../types";
-import { initialCollection } from "../data/initial";
+import { newCollection } from "../data/newCollection";
+import type {
+  CatalogReference,
+  CoverCredit,
+  SteamGameMetadata,
+} from "../types/catalog";
 export const STORAGE_KEY = "nyus-game-nexus.collection";
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
 const text = (v: unknown, max = 10000): v is string =>
   typeof v === "string" && v.length <= max;
+const positiveId = (v: unknown): v is number =>
+  typeof v === "number" && Number.isSafeInteger(v) && v > 0;
+function catalogReference(v: unknown): CatalogReference {
+  if (!isRecord(v) || v.provider !== "steamgriddb" || !positiveId(v.id))
+    throw new Error("Référence de catalogue invalide.");
+  return { provider: "steamgriddb", id: v.id };
+}
+function coverCredit(v: unknown): CoverCredit {
+  const reference = catalogReference(v);
+  if (!isRecord(v) || !text(v.author, 160))
+    throw new Error("Crédit de jaquette invalide.");
+  return { ...reference, author: v.author };
+}
+function steamMetadata(v: unknown): SteamGameMetadata {
+  if (!isRecord(v) || !positiveId(v.appId))
+    throw new Error("Métadonnées Steam invalides.");
+  const result: SteamGameMetadata = { appId: v.appId };
+  if (v.playtimeMinutes !== undefined) {
+    if (
+      typeof v.playtimeMinutes !== "number" ||
+      !Number.isSafeInteger(v.playtimeMinutes) ||
+      v.playtimeMinutes < 0
+    )
+      throw new Error("Temps Steam invalide.");
+    result.playtimeMinutes = v.playtimeMinutes;
+  }
+  if (v.lastSyncedAt !== undefined) {
+    if (
+      !text(v.lastSyncedAt, 100) ||
+      !Number.isFinite(Date.parse(v.lastSyncedAt))
+    )
+      throw new Error("Date Steam invalide.");
+    result.lastSyncedAt = v.lastSyncedAt;
+  }
+  if (v.achievements !== undefined) {
+    const a = v.achievements;
+    if (
+      !isRecord(a) ||
+      typeof a.unlocked !== "number" ||
+      typeof a.total !== "number" ||
+      !Number.isSafeInteger(a.unlocked) ||
+      !Number.isSafeInteger(a.total) ||
+      a.unlocked < 0 ||
+      a.total < a.unlocked
+    )
+      throw new Error("Succès Steam invalides.");
+    result.achievements = { unlocked: a.unlocked, total: a.total };
+  }
+  return result;
+}
 export function validCover(url: string): boolean {
   if (!url) return true;
   try {
@@ -75,14 +130,19 @@ export function validateCollection(value: unknown): Collection {
       progress: g.progress,
       waitingReason: g.waitingReason,
       updatedAt: g.updatedAt,
+      ...(g.catalog !== undefined
+        ? { catalog: catalogReference(g.catalog) }
+        : {}),
+      ...(g.coverCredit !== undefined
+        ? { coverCredit: coverCredit(g.coverCredit) }
+        : {}),
+      ...(g.steam !== undefined ? { steam: steamMetadata(g.steam) } : {}),
     })),
   };
 }
 export function loadCollection(storage: Pick<Storage, "getItem">): Collection {
   const raw = storage.getItem(STORAGE_KEY);
-  return raw === null
-    ? initialCollection()
-    : validateCollection(JSON.parse(raw));
+  return raw === null ? newCollection() : validateCollection(JSON.parse(raw));
 }
 export function saveCollection(
   storage: Pick<Storage, "setItem">,
@@ -91,6 +151,21 @@ export function saveCollection(
   storage.setItem(STORAGE_KEY, JSON.stringify(validateCollection(collection)));
 }
 export function upsertGame(collection: Collection, game: Game): Collection {
+  if (
+    game.catalog &&
+    collection.games.some(
+      (g) =>
+        g.id !== game.id &&
+        ((g.catalog?.provider === game.catalog!.provider &&
+          g.catalog.id === game.catalog!.id) ||
+          g.name.trim().toLocaleLowerCase() ===
+            game.name.trim().toLocaleLowerCase()),
+    )
+  ) {
+    throw new Error(
+      "Ce jeu est déjà dans votre collection. Modifiez sa carte existante.",
+    );
+  }
   return validateCollection({
     ...collection,
     games: collection.games.some((g) => g.id === game.id)

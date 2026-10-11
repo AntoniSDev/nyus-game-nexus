@@ -215,6 +215,7 @@ export default function App() {
         <GameForm
           game={form === "new" ? undefined : form}
           categories={collection.categories}
+          games={collection.games}
           onClose={() => setForm(null)}
           onSave={(g) => {
             try {

@@ -1,3 +1,8 @@
+import type {
+  CatalogReference,
+  CoverCredit,
+  SteamGameMetadata,
+} from "./catalog";
 export const statuses = [
   "Sélectionné",
   "En cours",
@@ -23,6 +28,9 @@ export interface Game {
   progress: string;
   waitingReason: string;
   updatedAt: string;
+  catalog?: CatalogReference;
+  coverCredit?: CoverCredit;
+  steam?: SteamGameMetadata;
 }
 export interface Collection {
   schemaVersion: 1;

@@ -26,7 +26,8 @@ test("persist edits, reload and preserve empty collections", () => {
       memory.set(key, value);
     },
   };
-  const c = loadCollection(storage);
+  assert.equal(loadCollection(storage).games.length, 0);
+  const c = initialCollection();
   const edited = upsertGame(c, {
     ...c.games[0],
     status: "Terminé",
@@ -90,4 +91,63 @@ test("surface storage errors and preserve exported data", () => {
     ),
   );
   assert.equal(STORAGE_KEY, "nyus-game-nexus.collection");
+});
+test("V4 leaves legacy saves byte-for-byte intact on load", () => {
+  const previous = initialCollection();
+  const raw = JSON.stringify(previous);
+  let stored = raw;
+  const storage = {
+    getItem: () => stored,
+    setItem: (_key: string, value: string) => {
+      stored = value;
+    },
+  };
+  assert.deepEqual(loadCollection(storage), previous);
+  assert.equal(stored, raw);
+  assert.equal(loadCollection({ getItem: () => null }).games.length, 0);
+});
+test("catalog identity, art credits and future Steam data survive export and prevent duplicate additions", () => {
+  const c = initialCollection();
+  const enriched = {
+    ...c.games[0],
+    catalog: { provider: "steamgriddb" as const, id: 42 },
+    coverCredit: {
+      provider: "steamgriddb" as const,
+      id: 101,
+      author: "Artist",
+    },
+    steam: {
+      appId: 892970,
+      playtimeMinutes: 60,
+      achievements: { unlocked: 0, total: 5 },
+      lastSyncedAt: "2026-10-11T00:00:00.000Z",
+    },
+  };
+  const updated = upsertGame(c, enriched);
+  assert.deepEqual(
+    validateCollection(JSON.parse(JSON.stringify(updated))),
+    updated,
+  );
+  assert.throws(
+    () =>
+      upsertGame(updated, {
+        ...enriched,
+        id: "other",
+        name: "Different title",
+      }),
+    /déjà/,
+  );
+  assert.equal(
+    upsertGame(updated, { ...enriched, notes: "Personal" }).games[0].notes,
+    "Personal",
+  );
+  for (const patch of [
+    { catalog: { provider: "steamgriddb", id: -1 } },
+    { coverCredit: { provider: "steamgriddb", id: 42, author: 1 } },
+    { steam: { appId: 1, playtimeMinutes: -1 } },
+    { steam: { appId: 1, achievements: { unlocked: 3, total: 2 } } },
+  ])
+    assert.throws(() =>
+      validateCollection({ ...c, games: [{ ...enriched, ...patch }] }),
+    );
 });

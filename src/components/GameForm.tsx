@@ -2,14 +2,18 @@ import { useState, type FormEvent } from "react";
 import { statuses, type Category, type Game } from "../types";
 import { validCover } from "../utils/collection";
 import { Modal } from "./Modal";
+import { CatalogPicker } from "./CatalogPicker";
+import type { CatalogArtwork, CatalogGame } from "../types/catalog";
 export function GameForm({
   game,
   categories,
+  games,
   onSave,
   onClose,
 }: {
   game?: Game;
   categories: Category[];
+  games: Game[];
   onSave: (game: Game) => void;
   onClose: () => void;
 }) {
@@ -28,10 +32,71 @@ export function GameForm({
   );
   const [error, setError] = useState("");
   function field<K extends keyof Game>(key: K, value: Game[K]) {
-    setDraft((d) => ({ ...d, [key]: value }));
+    setDraft((d) => {
+      const next = { ...d, [key]: value };
+      if (key === "name" && value !== d.name) {
+        delete next.catalog;
+        delete next.steam;
+      }
+      if (key === "coverUrl" && value !== d.coverUrl) delete next.coverCredit;
+      return next;
+    });
+  }
+  function selectGame(item: CatalogGame) {
+    setDraft((d) => {
+      const next = {
+        ...d,
+        name: item.name,
+        catalog: { provider: "steamgriddb" as const, id: item.id },
+        coverUrl: item.artwork?.url ?? "",
+      };
+      delete next.steam;
+      if (item.artwork)
+        next.coverCredit = {
+          provider: "steamgriddb",
+          id: item.artwork.id,
+          author: item.artwork.author,
+        };
+      else delete next.coverCredit;
+      return next;
+    });
+  }
+  function selectArtwork(
+    image: CatalogArtwork,
+    automatic = false,
+    gameId?: number,
+  ) {
+    setDraft((d) =>
+      automatic && (d.coverUrl || d.catalog?.id !== gameId)
+        ? d
+        : {
+            ...d,
+            coverUrl: image.url,
+            coverCredit: {
+              provider: "steamgriddb",
+              id: image.id,
+              author: image.author,
+            },
+          },
+    );
   }
   function submit(e: FormEvent) {
     e.preventDefault();
+    if (
+      draft.catalog &&
+      games.some(
+        (g) =>
+          g.id !== draft.id &&
+          (g.catalog?.id === draft.catalog?.id ||
+            g.name.trim().toLocaleLowerCase() ===
+              draft.name.trim().toLocaleLowerCase()),
+      )
+    ) {
+      setError(
+        "Ce jeu est déjà dans votre collection. Modifiez sa carte existante.",
+      );
+      return;
+    }
     if (
       !draft.name.trim() ||
       !draft.categoryId ||
@@ -55,10 +120,16 @@ export function GameForm({
       onClose={onClose}
     >
       <form onSubmit={submit} className="form">
+        <CatalogPicker
+          draft={draft}
+          games={games}
+          onSelect={selectGame}
+          onArtwork={selectArtwork}
+        />
         <label>
           Nom du jeu
           <input
-            autoFocus
+            autoFocus={Boolean(game)}
             required
             maxLength={160}
             value={draft.name}

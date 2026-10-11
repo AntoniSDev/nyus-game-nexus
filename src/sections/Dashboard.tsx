@@ -223,12 +223,18 @@ export function Dashboard({
             <button
               className="secondary"
               onClick={() => {
+                if (!collection.games.length) {
+                  onAdd();
+                  return;
+                }
                 setSearch("");
                 setStatus("Tous");
                 setCategory("Toutes");
               }}
             >
-              Réinitialiser les filtres
+              {collection.games.length
+                ? "Réinitialiser les filtres"
+                : "✧ Ajouter mon premier jeu"}
             </button>
           </div>
         )}

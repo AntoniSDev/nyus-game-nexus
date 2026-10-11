@@ -17,7 +17,7 @@ npm ci
 npm run dev
 ```
 
-Ouvrir l’adresse affichée par Vite, avec le chemin `/nyus-game-nexus/`.
+Ouvrir l’adresse affichée par Vite à la racine `/`.
 
 ```sh
 npm test
@@ -43,11 +43,16 @@ Une sauvegarde existante, même vide, n’est jamais remplacée par les exemples
 
 Les données appartiennent au navigateur et à l’origine du site : pas de synchronisation entre appareils. Exporter régulièrement avant de vider les données du navigateur. Les jaquettes HTTP(S) sont chargées directement depuis l’URL indiquée ; leur disponibilité dépend de l’hébergeur. HTTPS est recommandé.
 
-## GitHub Pages
+## Cloudflare Pages
 
-Dans le dépôt GitHub, choisir **Settings → Pages → Source → GitHub Actions**. Le workflow `.github/workflows/deploy.yml` teste, construit et déploie à chaque push sur `main`, ou manuellement. Le chemin Vite est `/nyus-game-nexus/`.
+Le projet Cloudflare Pages est connecté au dépôt GitHub. Les pushes sur la branche de production `main` déclenchent un nouveau déploiement.
 
-Adresse attendue après activation et déploiement : https://antonisdev.github.io/nyus-game-nexus/.
+- Commande de build : `npm run build`.
+- Répertoire de sortie : `dist`.
+- Répertoire racine : la racine du dépôt.
+- Runtime : Node.js 22.12+ ou 24.
+
+La base Vite est `/` : les CSS et JavaScript générés sont servis sous `/assets/`. Les SVG décoratifs sont intégrés dans les composants React et ne nécessitent aucun chemin de fichier externe. La navigation utilise les ancres de la page courante (`#` et `#collection`). Le workflow GitHub Pages a été supprimé ; le déploiement est géré par Cloudflare Pages.
 
 ## Organisation
 

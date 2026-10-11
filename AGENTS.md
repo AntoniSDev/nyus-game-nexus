@@ -11,5 +11,5 @@
 - Bump and migrate the schema deliberately when data structures change. Keep stable IDs.
 - Multiple games per category are allowed. Block deletion of occupied categories.
 - Run `npm test` and `npm run build` before delivering changes. Test meaningful persistence and validation behavior.
-- Keep Vite base `/nyus-game-nexus/`. Deploy through the GitHub Pages workflow on main.
+- Keep Vite base `/` for Cloudflare Pages. Pushes to main trigger the connected Cloudflare deployment; build with `npm run build`, output directory `dist`. Do not restore the obsolete GitHub Pages workflow or repository-path asset prefix.
 - Do not commit secrets, generated build output, or node_modules.
